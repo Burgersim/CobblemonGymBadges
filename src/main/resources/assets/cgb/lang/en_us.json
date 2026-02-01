@@ -1,0 +1,13 @@
+{
+  "itemGroup.cgb": "Example Mod Tab",
+  "block.cgb.example_block": "Example Block",
+  "item.cgb.example_item": "Example Item",
+
+  "cgb.configuration.title": "Cobblemon Gym Badges Configs",
+  "cgb.configuration.section.cgb.common.toml": "Cobblemon Gym Badges Configs",
+  "cgb.configuration.section.cgb.common.toml.title": "Cobblemon Gym Badges Configs",
+  "cgb.configuration.items": "Item List",
+  "cgb.configuration.logDirtBlock": "Log Dirt Block",
+  "cgb.configuration.magicNumberIntroduction": "Magic Number Text",
+  "cgb.configuration.magicNumber": "Magic Number"
+}
