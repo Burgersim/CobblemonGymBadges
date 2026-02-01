@@ -1,0 +1,22 @@
+{
+  "itemGroup.cgb": "Cobblemon Gym-Abzeichen",
+  "block.cgb.badge_press": "Abzeichenpresse",
+  "item.cgb.badge": "Abzeichen",
+  "container.cgb.badge_press": "Abzeichenpresse",
+  "tooltip.cgb.badge_theme": "Thema: %s",
+  "tooltip.cgb.badge_role": "Rolle: %s",
+  "commands.cgb.role_unknown": "Unbekannte Rolle: %s",
+  "commands.cgb.role_added": "%s zur Rolle %s hinzugefügt",
+  "commands.cgb.role_already": "%s hat bereits die Rolle %s",
+  "commands.cgb.role_removed": "%s aus der Rolle %s entfernt",
+  "commands.cgb.role_not_present": "%s hat die Rolle %s nicht",
+  "commands.cgb.role_list_empty": "Keine Rollen definiert.",
+  "commands.cgb.role_list_entry": "%s: %s",
+  "cgb.configuration.title": "Cobblemon Gym-Badges Konfiguration",
+  "cgb.configuration.section.cgb.common.toml": "Cobblemon Gym-Badges Konfiguration",
+  "cgb.configuration.section.cgb.common.toml.title": "Cobblemon Gym-Badges Konfiguration",
+  "cgb.configuration.items": "Item-Liste",
+  "cgb.configuration.logDirtBlock": "Dirt-Block loggen",
+  "cgb.configuration.magicNumberIntroduction": "Magische Zahl Text",
+  "cgb.configuration.magicNumber": "Magische Zahl"
+}

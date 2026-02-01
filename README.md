@@ -12,3 +12,6 @@ This mod adds a Badge Press for crafting Gym Badges. Only players with the Gym L
 - Datapacks / Resourcepacks for adding custom badges
 - JEI/EMI-Integration
   - only craftable recipes should be visible to each Player
+- the whole mod should be as Resourcepack-friendly as possible
+  - should only use vanilla textures for the blocks, UIs and stuff like that
+  - of course badges themselves can supply their textures via the resourcepacks

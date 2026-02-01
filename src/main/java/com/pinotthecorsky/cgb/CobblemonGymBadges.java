@@ -1,35 +1,50 @@
 package com.pinotthecorsky.cgb;
 
-import org.slf4j.Logger;
-
 import com.mojang.logging.LogUtils;
-
+import com.pinotthecorsky.cgb.badge.BadgeDefinition;
+import com.pinotthecorsky.cgb.badge.BadgeItem;
+import com.pinotthecorsky.cgb.block.BadgePressBlock;
+import com.pinotthecorsky.cgb.block.entity.BadgePressBlockEntity;
+import com.pinotthecorsky.cgb.command.CgbCommands;
+import com.pinotthecorsky.cgb.network.CgbNetwork;
+import com.pinotthecorsky.cgb.network.RoleSyncEvents;
+import com.pinotthecorsky.cgb.menu.BadgePressMenu;
+import com.pinotthecorsky.cgb.recipe.BadgeMakingRecipe;
+import net.minecraft.core.Registry;
+import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
-import net.minecraft.world.food.FoodProperties;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.inventory.MenuType;
+import net.minecraft.world.item.crafting.RecipeSerializer;
+import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
-import net.minecraft.world.level.material.MapColor;
-import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.config.ModConfig;
-import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.common.extensions.IMenuTypeExtension;
 import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.event.server.ServerStartingEvent;
 import net.neoforged.neoforge.registries.DeferredBlock;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredItem;
 import net.neoforged.neoforge.registries.DeferredRegister;
+import org.slf4j.Logger;
 
 // The value here should match an entry in the META-INF/neoforge.mods.toml file
 @Mod(CobblemonGymBadges.MODID)
@@ -44,23 +59,63 @@ public class CobblemonGymBadges {
     public static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(MODID);
     // Create a Deferred Register to hold CreativeModeTabs which will all be registered under the "cgb" namespace
     public static final DeferredRegister<CreativeModeTab> CREATIVE_MODE_TABS = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, MODID);
+    public static final DeferredRegister<DataComponentType<?>> DATA_COMPONENTS = DeferredRegister.createDataComponents(Registries.DATA_COMPONENT_TYPE, MODID);
+    public static final DeferredRegister<BlockEntityType<?>> BLOCK_ENTITIES = DeferredRegister.create(Registries.BLOCK_ENTITY_TYPE, MODID);
+    public static final DeferredRegister<MenuType<?>> MENUS = DeferredRegister.create(Registries.MENU, MODID);
+    public static final DeferredRegister<RecipeType<?>> RECIPE_TYPES = DeferredRegister.create(Registries.RECIPE_TYPE, MODID);
+    public static final DeferredRegister<RecipeSerializer<?>> RECIPE_SERIALIZERS = DeferredRegister.create(Registries.RECIPE_SERIALIZER, MODID);
 
-    // Creates a new Block with the id "cgb:example_block", combining the namespace and path
-    public static final DeferredBlock<Block> EXAMPLE_BLOCK = BLOCKS.registerSimpleBlock("example_block", BlockBehaviour.Properties.of().mapColor(MapColor.STONE));
+    public static final ResourceKey<Registry<BadgeDefinition>> BADGE_REGISTRY_KEY =
+        ResourceKey.createRegistryKey(ResourceLocation.fromNamespaceAndPath(MODID, "badge"));
+
+    // Register Badge Press Block
+    public static final DeferredBlock<Block> BADGE_PRESS = BLOCKS.register(
+            "badge_press",
+            registryName -> new BadgePressBlock(
+                    BlockBehaviour.Properties.of()
+                        .destroyTime(2.0f)
+                        .explosionResistance(10.0f)
+                        .sound(SoundType.METAL)
+    ));
+
     // Creates a new BlockItem with the id "cgb:example_block", combining the namespace and path
-    public static final DeferredItem<BlockItem> EXAMPLE_BLOCK_ITEM = ITEMS.registerSimpleBlockItem("example_block", EXAMPLE_BLOCK);
+    public static final DeferredItem<BlockItem> BADGE_PRESS_ITEM = ITEMS.registerSimpleBlockItem("badge_press", BADGE_PRESS);
 
-    // Creates a new food item with the id "cgb:example_id", nutrition 1 and saturation 2
-    public static final DeferredItem<Item> EXAMPLE_ITEM = ITEMS.registerSimpleItem("example_item", new Item.Properties().food(new FoodProperties.Builder()
-            .alwaysEdible().nutrition(1).saturationModifier(2f).build()));
+    public static final DeferredItem<Item> BADGE_ITEM = ITEMS.register("badge", () -> new BadgeItem(new Item.Properties().stacksTo(1)));
+
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<ResourceLocation>> BADGE_THEME =
+        DATA_COMPONENTS.register(
+            "badge_theme",
+            () -> DataComponentType.<ResourceLocation>builder()
+                .persistent(ResourceLocation.CODEC)
+                .networkSynchronized(ByteBufCodecs.fromCodecWithRegistries(ResourceLocation.CODEC))
+                .build()
+        );
+
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<BadgePressBlockEntity>> BADGE_PRESS_BLOCK_ENTITY =
+        BLOCK_ENTITIES.register("badge_press", () -> BlockEntityType.Builder.of(BadgePressBlockEntity::new, BADGE_PRESS.get()).build(null));
+
+    public static final DeferredHolder<MenuType<?>, MenuType<BadgePressMenu>> BADGE_PRESS_MENU =
+        MENUS.register("badge_press", () -> IMenuTypeExtension.create(BadgePressMenu::new));
+
+    public static final DeferredHolder<RecipeType<?>, RecipeType<BadgeMakingRecipe>> BADGEMAKING_RECIPE_TYPE =
+        RECIPE_TYPES.register("badgemaking", () -> RecipeType.simple(ResourceLocation.fromNamespaceAndPath(MODID, "badgemaking")));
+
+    public static final DeferredHolder<RecipeSerializer<?>, RecipeSerializer<BadgeMakingRecipe>> BADGEMAKING_RECIPE_SERIALIZER =
+        RECIPE_SERIALIZERS.register("badgemaking", BadgeMakingRecipe.Serializer::new);
+
+//    // Creates a new food item with the id "cgb:example_id", nutrition 1 and saturation 2
+//    public static final DeferredItem<Item> EXAMPLE_ITEM = ITEMS.registerSimpleItem("example_item", new Item.Properties().food(new FoodProperties.Builder()
+//            .alwaysEdible().nutrition(1).saturationModifier(2f).build()));
 
     // Creates a creative tab with the id "cgb:example_tab" for the example item, that is placed after the combat tab
-    public static final DeferredHolder<CreativeModeTab, CreativeModeTab> EXAMPLE_TAB = CREATIVE_MODE_TABS.register("example_tab", () -> CreativeModeTab.builder()
+    public static final DeferredHolder<CreativeModeTab, CreativeModeTab> COBBLEMON_GYM_BADGES = CREATIVE_MODE_TABS.register("cobblemon_gym_badges", () -> CreativeModeTab.builder()
             .title(Component.translatable("itemGroup.cgb")) //The language key for the title of your CreativeModeTab
             .withTabsBefore(CreativeModeTabs.COMBAT)
-            .icon(() -> EXAMPLE_ITEM.get().getDefaultInstance())
+            .icon(() -> BADGE_PRESS_ITEM.get().getDefaultInstance())
             .displayItems((parameters, output) -> {
-                output.accept(EXAMPLE_ITEM.get()); // Add the example item to the tab. For your own tabs, this method is preferred over the event
+                output.accept(BADGE_PRESS_ITEM.get()); // Add the example item to the tab. For your own tabs, this method is preferred over the event
+                output.accept(BADGE_ITEM.get());
             }).build());
 
     // The constructor for the mod class is the first code that is run when your mod is loaded.
@@ -68,6 +123,8 @@ public class CobblemonGymBadges {
     public CobblemonGymBadges(IEventBus modEventBus, ModContainer modContainer) {
         // Register the commonSetup method for modloading
         modEventBus.addListener(this::commonSetup);
+        modEventBus.addListener(CgbDatapackRegistries::onRegisterDatapackRegistries);
+        modEventBus.addListener(CgbNetwork::onRegisterPayloads);
 
         // Register the Deferred Register to the mod event bus so blocks get registered
         BLOCKS.register(modEventBus);
@@ -75,11 +132,18 @@ public class CobblemonGymBadges {
         ITEMS.register(modEventBus);
         // Register the Deferred Register to the mod event bus so tabs get registered
         CREATIVE_MODE_TABS.register(modEventBus);
+        DATA_COMPONENTS.register(modEventBus);
+        BLOCK_ENTITIES.register(modEventBus);
+        MENUS.register(modEventBus);
+        RECIPE_TYPES.register(modEventBus);
+        RECIPE_SERIALIZERS.register(modEventBus);
 
         // Register ourselves for server and other game events we are interested in.
         // Note that this is necessary if and only if we want *this* class (CobblemonGymBadges) to respond directly to events.
         // Do not add this line if there are no @SubscribeEvent-annotated functions in this class, like onServerStarting() below.
         NeoForge.EVENT_BUS.register(this);
+        NeoForge.EVENT_BUS.addListener(CgbCommands::onRegisterCommands);
+        NeoForge.EVENT_BUS.addListener(RoleSyncEvents::onPlayerLoggedIn);
 
         // Register the item to a creative tab
         modEventBus.addListener(this::addCreative);
@@ -104,7 +168,7 @@ public class CobblemonGymBadges {
     // Add the example block item to the building blocks tab
     private void addCreative(BuildCreativeModeTabContentsEvent event) {
         if (event.getTabKey() == CreativeModeTabs.BUILDING_BLOCKS) {
-            event.accept(EXAMPLE_BLOCK_ITEM);
+            event.accept(BADGE_PRESS_ITEM);
         }
     }
 
