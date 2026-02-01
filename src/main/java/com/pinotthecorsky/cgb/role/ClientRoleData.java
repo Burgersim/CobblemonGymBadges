@@ -1,6 +1,8 @@
 package com.pinotthecorsky.cgb.role;
 
+import com.pinotthecorsky.cgb.compat.EmiCompat;
 import com.pinotthecorsky.cgb.compat.JeiCompat;
+import com.pinotthecorsky.cgb.compat.ReiCompat;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashSet;
@@ -13,6 +15,8 @@ public final class ClientRoleData {
         ROLES.clear();
         ROLES.addAll(roles);
         JeiCompat.onRolesChanged();
+        EmiCompat.onRolesChanged();
+        ReiCompat.onRolesChanged();
         JeiCompat.onBadgesChanged();
     }
 

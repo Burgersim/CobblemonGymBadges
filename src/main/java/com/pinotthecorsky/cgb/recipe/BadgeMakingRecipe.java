@@ -2,10 +2,14 @@ package com.pinotthecorsky.cgb.recipe;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
+import com.mojang.serialization.DynamicOps;
 import com.mojang.serialization.MapCodec;
+import com.mojang.serialization.MapLike;
+import com.mojang.serialization.RecordBuilder;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.pinotthecorsky.cgb.CobblemonGymBadges;
 import com.pinotthecorsky.cgb.badge.BadgeItem;
+import java.util.stream.Stream;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.NonNullList;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -20,33 +24,53 @@ import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.Level;
 
 public class BadgeMakingRecipe implements Recipe<BadgePressRecipeInput> {
-    private final Ingredient inputA;
-    private final Ingredient inputB;
+    private final Ingredient coreIngredient;
+    private final Ingredient baseIngredient;
     private final ResultSpec result;
     private final String permission;
+    private final boolean requiresRole;
 
-    public BadgeMakingRecipe(Ingredient inputA, Ingredient inputB, ResultSpec result, String permission) {
-        this.inputA = inputA;
-        this.inputB = inputB;
+    public BadgeMakingRecipe(Ingredient coreIngredient, Ingredient baseIngredient, ResultSpec result, String permission, boolean requiresRole) {
+        this.coreIngredient = coreIngredient;
+        this.baseIngredient = baseIngredient;
         this.result = result;
         this.permission = permission;
+        this.requiresRole = requiresRole;
     }
 
-    public Ingredient getInputA() {
-        return this.inputA;
+    public Ingredient getCoreIngredient() {
+        return this.coreIngredient;
     }
 
-    public Ingredient getInputB() {
-        return this.inputB;
+    public Ingredient getBaseIngredient() {
+        return this.baseIngredient;
     }
 
     public String getPermission() {
         return this.permission;
     }
 
+    public boolean requiresRole() {
+        return this.requiresRole;
+    }
+
+    public String getRequiredRole(HolderLookup.Provider registries) {
+        if (!this.requiresRole) {
+            return "";
+        }
+        if (this.permission != null && !this.permission.isEmpty()) {
+            return this.permission;
+        }
+        ItemStack output = getResultItem(registries);
+        if (output.getItem() instanceof BadgeItem) {
+            return BadgeItem.getRequiredRole(output, registries);
+        }
+        return "";
+    }
+
     @Override
     public boolean matches(BadgePressRecipeInput input, Level level) {
-        return this.inputA.test(input.getItem(0)) && this.inputB.test(input.getItem(1));
+        return this.coreIngredient.test(input.getItem(0)) && this.baseIngredient.test(input.getItem(1));
     }
 
     @Override
@@ -67,8 +91,8 @@ public class BadgeMakingRecipe implements Recipe<BadgePressRecipeInput> {
     @Override
     public NonNullList<Ingredient> getIngredients() {
         NonNullList<Ingredient> ingredients = NonNullList.create();
-        ingredients.add(this.inputA);
-        ingredients.add(this.inputB);
+        ingredients.add(this.coreIngredient);
+        ingredients.add(this.baseIngredient);
         return ingredients;
     }
 
@@ -136,21 +160,59 @@ public class BadgeMakingRecipe implements Recipe<BadgePressRecipeInput> {
                     .orElseGet(() -> com.mojang.datafixers.util.Either.left(result.stack()))
             );
 
-        private static final MapCodec<BadgeMakingRecipe> CODEC = RecordCodecBuilder.mapCodec(
-            instance -> instance.group(
-                    Ingredient.CODEC_NONEMPTY.fieldOf("input_a").forGetter(BadgeMakingRecipe::getInputA),
-                    Ingredient.CODEC_NONEMPTY.fieldOf("input_b").forGetter(BadgeMakingRecipe::getInputB),
-                    RESULT_CODEC.fieldOf("result").forGetter(recipe -> recipe.result),
-                    Codec.STRING.optionalFieldOf("permission", "").forGetter(BadgeMakingRecipe::getPermission)
-                )
-                .apply(instance, BadgeMakingRecipe::new)
-        );
+        private static final MapCodec<BadgeMakingRecipe> CODEC = new MapCodec<>() {
+            @Override
+            public <T> DataResult<BadgeMakingRecipe> decode(DynamicOps<T> ops, MapLike<T> input) {
+                DataResult<Ingredient> core = decodeIngredient(ops, input, "core", "core_ingredient", "input_a");
+                DataResult<Ingredient> base = decodeIngredient(ops, input, "base", "base_ingredient", "input_b");
+                DataResult<ResultSpec> result = decodeRequired(RESULT_CODEC, ops, input, "result");
+                DataResult<String> permission = decodeOptional(Codec.STRING, ops, input, "permission", "");
+                DataResult<Boolean> requiresRole = decodeOptional(Codec.BOOL, ops, input, "requires_role", true);
+
+                return core.flatMap(coreIngredient ->
+                    base.flatMap(baseIngredient ->
+                        result.flatMap(resultSpec ->
+                            permission.flatMap(permissionValue ->
+                                requiresRole.map(roleRequired ->
+                                    new BadgeMakingRecipe(coreIngredient, baseIngredient, resultSpec, permissionValue, roleRequired)
+                                )
+                            )
+                        )
+                    )
+                );
+            }
+
+            @Override
+            public <T> RecordBuilder<T> encode(BadgeMakingRecipe recipe, DynamicOps<T> ops, RecordBuilder<T> builder) {
+                builder.add("core", Ingredient.CODEC_NONEMPTY.encodeStart(ops, recipe.coreIngredient));
+                builder.add("base", Ingredient.CODEC_NONEMPTY.encodeStart(ops, recipe.baseIngredient));
+                builder.add("result", RESULT_CODEC.encodeStart(ops, recipe.result));
+                if (!recipe.permission.isEmpty()) {
+                    builder.add("permission", Codec.STRING.encodeStart(ops, recipe.permission));
+                }
+                if (!recipe.requiresRole) {
+                    builder.add("requires_role", Codec.BOOL.encodeStart(ops, false));
+                }
+                return builder;
+            }
+
+            @Override
+            public <T> Stream<T> keys(DynamicOps<T> ops) {
+                return Stream.of(
+                    ops.createString("core"),
+                    ops.createString("base"),
+                    ops.createString("result"),
+                    ops.createString("permission"),
+                    ops.createString("requires_role")
+                );
+            }
+        };
 
         private static final StreamCodec<RegistryFriendlyByteBuf, BadgeMakingRecipe> STREAM_CODEC = StreamCodec.composite(
             Ingredient.CONTENTS_STREAM_CODEC,
-            BadgeMakingRecipe::getInputA,
+            BadgeMakingRecipe::getCoreIngredient,
             Ingredient.CONTENTS_STREAM_CODEC,
-            BadgeMakingRecipe::getInputB,
+            BadgeMakingRecipe::getBaseIngredient,
             new StreamCodec<>() {
                 @Override
                 public ResultSpec decode(RegistryFriendlyByteBuf buf) {
@@ -185,8 +247,53 @@ public class BadgeMakingRecipe implements Recipe<BadgePressRecipeInput> {
             recipe -> recipe.result,
             ByteBufCodecs.STRING_UTF8,
             BadgeMakingRecipe::getPermission,
+            ByteBufCodecs.BOOL,
+            BadgeMakingRecipe::requiresRole,
             BadgeMakingRecipe::new
         );
+
+        private static <T> DataResult<Ingredient> decodeIngredient(DynamicOps<T> ops, MapLike<T> input, String... keys) {
+            DataResult<Ingredient> firstError = null;
+            for (String key : keys) {
+                T value = input.get(key);
+                if (value == null) {
+                    continue;
+                }
+                DataResult<Ingredient> decoded = Ingredient.CODEC_NONEMPTY.parse(ops, value);
+                if (decoded.result().isPresent()) {
+                    return decoded;
+                }
+                if (firstError == null) {
+                    firstError = decoded;
+                }
+            }
+            if (firstError != null) {
+                return firstError;
+            }
+            return DataResult.error(() -> "Missing ingredient. Expected one of: " + String.join(", ", keys));
+        }
+
+        private static <T, V> DataResult<V> decodeRequired(Codec<V> codec, DynamicOps<T> ops, MapLike<T> input, String key) {
+            T value = input.get(key);
+            if (value == null) {
+                return DataResult.error(() -> "Missing required field '" + key + "'");
+            }
+            return codec.parse(ops, value);
+        }
+
+        private static <T, V> DataResult<V> decodeOptional(
+            Codec<V> codec,
+            DynamicOps<T> ops,
+            MapLike<T> input,
+            String key,
+            V defaultValue
+        ) {
+            T value = input.get(key);
+            if (value == null) {
+                return DataResult.success(defaultValue);
+            }
+            return codec.parse(ops, value);
+        }
 
         @Override
         public MapCodec<BadgeMakingRecipe> codec() {

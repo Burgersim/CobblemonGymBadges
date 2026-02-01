@@ -5,6 +5,7 @@
   "item.cgb.badge": "Badge",
   "item.cgb.example_item": "Example Item",
   "container.cgb.badge_press": "Badge Press",
+  "emi.category.cgb.badge_press": "Badge Press",
   "tooltip.cgb.badge_theme": "Theme: %s",
   "tooltip.cgb.badge_role": "Role: %s",
   "commands.cgb.role_unknown": "Unknown role: %s",

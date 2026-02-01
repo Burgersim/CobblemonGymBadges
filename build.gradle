@@ -21,6 +21,8 @@ repositories {
     // Add here additional repositories if required by some of the dependencies below.
     maven { url = "https://maven.blamejared.com" }
     maven { url = "https://modmaven.dev" }
+    maven { url = "https://maven.architectury.dev" }
+    maven { url = "https://maven.terraformersmc.com/releases" }
 }
 
 base {
@@ -121,6 +123,14 @@ dependencies {
     compileOnly "mezz.jei:jei-${minecraft_version}-neoforge:${jei_version}"
     // We add the full version to localRuntime, not runtimeOnly, so that we do not publish a dependency on it
     localRuntime "mezz.jei:jei-${minecraft_version}-neoforge:${jei_version}"
+
+    def emiJar = file("run/mods/emi-${emi_version}.jar")
+    if (emiJar.exists()) {
+        compileOnly files(emiJar)
+    } else {
+        compileOnly "dev.emi:emi-neoforge:${emi_version}"
+    }
+    compileOnly "me.shedaniel:RoughlyEnoughItems-api-neoforge:${rei_version}"
 
     // Example mod dependency using a mod jar from ./libs with a flat dir repository
     // This maps to ./libs/coolmod-${mc_version}-${coolmod_version}.jar

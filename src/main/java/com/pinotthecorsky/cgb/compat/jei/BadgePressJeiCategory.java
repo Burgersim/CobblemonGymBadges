@@ -32,10 +32,10 @@ public class BadgePressJeiCategory extends AbstractRecipeCategory<BadgeMakingRec
     public void setRecipe(IRecipeLayoutBuilder builder, BadgeMakingRecipe recipe, IFocusGroup focuses) {
         builder.addSlot(RecipeIngredientRole.INPUT, 1, 1)
             .setStandardSlotBackground()
-            .addIngredients(recipe.getInputA());
+            .addIngredients(recipe.getCoreIngredient());
         builder.addSlot(RecipeIngredientRole.INPUT, 1, 37)
             .setStandardSlotBackground()
-            .addIngredients(recipe.getInputB());
+            .addIngredients(recipe.getBaseIngredient());
 
         RegistryAccess registryAccess = Minecraft.getInstance().level != null
             ? Minecraft.getInstance().level.registryAccess()

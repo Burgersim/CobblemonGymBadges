@@ -3,6 +3,7 @@
   "block.cgb.badge_press": "Abzeichenpresse",
   "item.cgb.badge": "Abzeichen",
   "container.cgb.badge_press": "Abzeichenpresse",
+  "emi.category.cgb.badge_press": "Abzeichenpresse",
   "tooltip.cgb.badge_theme": "Thema: %s",
   "tooltip.cgb.badge_role": "Rolle: %s",
   "commands.cgb.role_unknown": "Unbekannte Rolle: %s",

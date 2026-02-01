@@ -46,6 +46,18 @@ public class BadgeItem extends Item {
         return badgeId.getPath();
     }
 
+    public static String getRequiredRole(ItemStack stack, @Nullable HolderLookup.Provider registries) {
+        ResourceLocation badgeId = stack.get(CobblemonGymBadges.BADGE_THEME.get());
+        if (badgeId == null || registries == null) {
+            return "";
+        }
+        BadgeDefinition definition = lookupDefinition(registries, badgeId);
+        if (definition == null) {
+            return "";
+        }
+        return definition.effectiveRole();
+    }
+
     public static java.util.Optional<ResourceLocation> resolveThemeToBadgeId(HolderLookup.Provider registries, String theme) {
         if (theme == null || theme.isEmpty()) {
             return java.util.Optional.empty();
@@ -131,13 +143,13 @@ public class BadgeItem extends Item {
         if (definition == null) {
             return;
         }
-        ResourceLocation badgeId = stack.get(CobblemonGymBadges.BADGE_THEME.get());
-        String theme = badgeId == null ? "" : definition.effectiveTheme(badgeId);
+        String theme = definition.theme();
         if (!theme.isEmpty()) {
             tooltipComponents.add(Component.translatable("tooltip.cgb.badge_theme", theme));
         }
-        if (!theme.isEmpty()) {
-            tooltipComponents.add(Component.translatable("tooltip.cgb.badge_role", "gym_leader_" + theme));
+        String role = definition.effectiveRole();
+        if (!role.isEmpty()) {
+            tooltipComponents.add(Component.translatable("tooltip.cgb.badge_role", "gym_leader_" + role));
         }
     }
 

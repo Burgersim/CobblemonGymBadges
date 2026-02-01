@@ -134,12 +134,12 @@ public class BadgePressMenu extends AbstractContainerMenu implements ContainerLi
     }
 
     private boolean hasPermission(RecipeHolder<BadgeMakingRecipe> recipe) {
-        String requiredTheme = BadgeItem.getRequiredTheme(recipe.value().getResultItem(this.level.registryAccess()), this.level.registryAccess());
-        if (requiredTheme.isEmpty()) {
+        String requiredRole = recipe.value().getRequiredRole(this.level.registryAccess());
+        if (requiredRole.isEmpty()) {
             return true;
         }
         if (this.player instanceof ServerPlayer serverPlayer) {
-            return RoleManager.hasRole(serverPlayer, requiredTheme);
+            return RoleManager.hasRole(serverPlayer, requiredRole);
         }
         return true;
     }

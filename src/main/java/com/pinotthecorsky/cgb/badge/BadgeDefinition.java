@@ -36,6 +36,16 @@ public record BadgeDefinition(
         return this.theme.isEmpty() ? badgeId.getPath() : this.theme;
     }
 
+    public String effectiveRole() {
+        if (!this.role.isEmpty()) {
+            return this.role;
+        }
+        if (!this.theme.isEmpty()) {
+            return this.theme;
+        }
+        return "";
+    }
+
     public Optional<ResourceLocation> resolvedModel() {
         return this.model.isPresent() ? this.model : this.texture;
     }

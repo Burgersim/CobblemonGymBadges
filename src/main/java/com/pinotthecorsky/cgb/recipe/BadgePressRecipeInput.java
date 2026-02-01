@@ -3,12 +3,12 @@ package com.pinotthecorsky.cgb.recipe;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.RecipeInput;
 
-public record BadgePressRecipeInput(ItemStack inputA, ItemStack inputB) implements RecipeInput {
+public record BadgePressRecipeInput(ItemStack core, ItemStack base) implements RecipeInput {
     @Override
     public ItemStack getItem(int index) {
         return switch (index) {
-            case 0 -> this.inputA;
-            case 1 -> this.inputB;
+            case 0 -> this.core;
+            case 1 -> this.base;
             default -> throw new IllegalArgumentException("Recipe does not contain slot " + index);
         };
     }
@@ -20,6 +20,6 @@ public record BadgePressRecipeInput(ItemStack inputA, ItemStack inputB) implemen
 
     @Override
     public boolean isEmpty() {
-        return this.inputA.isEmpty() && this.inputB.isEmpty();
+        return this.core.isEmpty() && this.base.isEmpty();
     }
 }

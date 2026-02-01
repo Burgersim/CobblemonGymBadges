@@ -1,27 +1,29 @@
 package com.pinotthecorsky.cgb.compat.jei;
 
 import com.pinotthecorsky.cgb.CobblemonGymBadges;
-import com.pinotthecorsky.cgb.badge.BadgeDefinition;
-import com.pinotthecorsky.cgb.badge.BadgeItem;
+import com.pinotthecorsky.cgb.compat.itemlist.CustomItemListCollector;
 import com.pinotthecorsky.cgb.recipe.BadgeMakingRecipe;
 import com.pinotthecorsky.cgb.role.ClientRoleData;
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 import mezz.jei.api.IModPlugin;
 import mezz.jei.api.JeiPlugin;
+import mezz.jei.api.constants.VanillaTypes;
 import mezz.jei.api.helpers.IGuiHelper;
 import mezz.jei.api.ingredients.IIngredientHelper;
+import mezz.jei.api.ingredients.subtypes.IIngredientSubtypeInterpreter;
 import mezz.jei.api.ingredients.subtypes.ISubtypeInterpreter;
 import mezz.jei.api.ingredients.subtypes.UidContext;
 import mezz.jei.api.recipe.IRecipeManager;
 import mezz.jei.api.recipe.RecipeType;
-import mezz.jei.api.registration.IExtraIngredientRegistration;
 import mezz.jei.api.registration.IRecipeCatalystRegistration;
 import mezz.jei.api.registration.IRecipeCategoryRegistration;
 import mezz.jei.api.registration.IRecipeRegistration;
 import mezz.jei.api.registration.ISubtypeRegistration;
+import mezz.jei.api.runtime.IIngredientManager;
 import mezz.jei.api.runtime.IJeiRuntime;
 import mezz.jei.library.ingredients.subtypes.SubtypeInterpreters;
 import mezz.jei.library.load.registration.SubtypeRegistration;
@@ -29,12 +31,10 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.RecipeManager;
-import mezz.jei.api.constants.VanillaTypes;
-import net.minecraft.world.item.Item;
 
 @JeiPlugin
 public class CgbJeiPlugin implements IModPlugin {
@@ -44,9 +44,10 @@ public class CgbJeiPlugin implements IModPlugin {
     );
 
     private static IJeiRuntime runtime;
-    private static List<BadgeMakingRecipe> registeredRecipes = List.of();
-    private static List<ItemStack> extraStacks = List.of();
+    private static IIngredientManager ingredientManager;
     private static IIngredientHelper<ItemStack> itemHelper;
+    private static List<ItemStack> addedStacks = List.of();
+    private static List<BadgeMakingRecipe> registeredRecipes = List.of();
 
     @Override
     public ResourceLocation getPluginUid() {
@@ -70,27 +71,21 @@ public class CgbJeiPlugin implements IModPlugin {
             ItemStack defaultStack = item.getDefaultInstance();
             ISubtypeInterpreter<ItemStack> existing = interpreters.get(VanillaTypes.ITEM_STACK, defaultStack);
             interpreters.addInterpreter(VanillaTypes.ITEM_STACK, item, (stack, context) -> {
-                if (isCustom(stack)) {
+                if (CustomItemListCollector.isCustom(stack)) {
                     return String.valueOf(stack.getComponents().hashCode());
                 }
-                return existing != null ? existing.getSubtypeData(stack, context) : null;
+                Object existingData = existing != null ? existing.getSubtypeData(stack, context) : null;
+                return existingData != null ? existingData.toString() : IIngredientSubtypeInterpreter.NONE;
             });
         }
-    }
-
-    @Override
-    public void registerExtraIngredients(IExtraIngredientRegistration registration) {
-        Minecraft minecraft = Minecraft.getInstance();
-        if (minecraft.level == null) {
-            return;
-        }
-        // Runtime refresh handles extra ingredients once JEI is fully initialized.
     }
 
     @Override
     public void registerRecipes(IRecipeRegistration registration) {
         registeredRecipes = List.copyOf(getAllRecipes());
         registration.addRecipes(BADGE_MAKING_TYPE, registeredRecipes);
+        refreshVisibility();
+        refreshItemListFromLevel();
     }
 
     @Override
@@ -101,14 +96,24 @@ public class CgbJeiPlugin implements IModPlugin {
     @Override
     public void onRuntimeAvailable(IJeiRuntime jeiRuntime) {
         runtime = jeiRuntime;
-        itemHelper = runtime.getIngredientManager().getIngredientHelper(VanillaTypes.ITEM_STACK);
+        ingredientManager = runtime.getIngredientManager();
+        itemHelper = ingredientManager.getIngredientHelper(VanillaTypes.ITEM_STACK);
         refreshVisibility();
-        refreshExtraIngredients();
+        refreshItemListFromLevel();
     }
 
     @Override
     public void onRuntimeUnavailable() {
         runtime = null;
+        ingredientManager = null;
+        itemHelper = null;
+        addedStacks = List.of();
+    }
+
+    public static void onRecipesUpdated() {
+        registeredRecipes = List.copyOf(getAllRecipes());
+        refreshVisibility();
+        refreshItemListFromLevel();
     }
 
     public static void onRolesChanged() {
@@ -116,7 +121,7 @@ public class CgbJeiPlugin implements IModPlugin {
     }
 
     public static void onBadgesChanged() {
-        refreshExtraIngredients();
+        refreshItemListFromLevel();
     }
 
     private static void refreshVisibility() {
@@ -141,113 +146,78 @@ public class CgbJeiPlugin implements IModPlugin {
         }
     }
 
-    private static void refreshExtraIngredients() {
-        if (runtime == null) {
+    private static void refreshItemListFromLevel() {
+        if (ingredientManager == null || itemHelper == null) {
             return;
         }
-        Minecraft minecraft = Minecraft.getInstance();
-        if (minecraft.level == null) {
+        RecipeManager recipeManager = CustomItemListCollector.getActiveRecipeManager();
+        if (recipeManager == null) {
             return;
         }
-        runtime.getIngredientManager().removeIngredientsAtRuntime(
-            VanillaTypes.ITEM_STACK,
-            List.of(new ItemStack(CobblemonGymBadges.BADGE_ITEM.get()))
-        );
-        List<ItemStack> newStacks = collectCustomStacks(minecraft.level.registryAccess(), minecraft.level.getRecipeManager());
-        if (!extraStacks.isEmpty()) {
-            runtime.getIngredientManager().removeIngredientsAtRuntime(VanillaTypes.ITEM_STACK, extraStacks);
+        refreshItemList(recipeManager, CustomItemListCollector.getActiveRegistryAccess());
+    }
+
+    private static void refreshItemList(RecipeManager recipeManager, RegistryAccess registryAccess) {
+        List<ItemStack> newStacks = collectCustomStacks(recipeManager, registryAccess);
+        if (!addedStacks.isEmpty()) {
+            ingredientManager.removeIngredientsAtRuntime(VanillaTypes.ITEM_STACK, addedStacks);
         }
-        extraStacks = List.copyOf(newStacks);
-        if (!extraStacks.isEmpty()) {
-            runtime.getIngredientManager().addIngredientsAtRuntime(VanillaTypes.ITEM_STACK, extraStacks);
+        addedStacks = List.copyOf(newStacks);
+        if (!addedStacks.isEmpty()) {
+            ingredientManager.addIngredientsAtRuntime(VanillaTypes.ITEM_STACK, addedStacks);
         }
     }
 
-    private static List<ItemStack> collectCustomStacks(RegistryAccess registryAccess, RecipeManager recipeManager) {
+    private static List<ItemStack> collectCustomStacks(RecipeManager recipeManager, RegistryAccess registryAccess) {
         List<ItemStack> stacks = new ArrayList<>();
-        if (itemHelper == null) {
-            return stacks;
-        }
-        Set<Object> seenUids = new HashSet<>();
-        addBadgeStacks(registryAccess, seenUids, stacks);
-        for (net.minecraft.world.item.crafting.RecipeType<?> type : BuiltInRegistries.RECIPE_TYPE) {
-            List<RecipeHolder<?>> holders = (List) recipeManager.getAllRecipesFor((net.minecraft.world.item.crafting.RecipeType) type);
-            for (RecipeHolder<?> holder : holders) {
-                ResourceLocation id = holder.id();
-                if (id != null && "minecraft".equals(id.getNamespace())) {
-                    continue;
-                }
-                net.minecraft.world.item.crafting.Recipe<?> recipe = holder.value();
-                for (Ingredient ingredient : recipe.getIngredients()) {
-                    for (ItemStack ingredientStack : ingredient.getItems()) {
-                        addCustomStack(ingredientStack, seenUids, stacks, registryAccess);
-                    }
-                }
-                ItemStack output = recipe.getResultItem(registryAccess).copy();
-                addCustomStack(output, seenUids, stacks, registryAccess);
+        Map<ItemStack, String> namespaces = new HashMap<>();
+        CustomItemListCollector.scanRecipes(recipeManager, registryAccess, (stack, namespace) -> {
+            if (alreadyAdded(stack, stacks)) {
+                return;
             }
+            stacks.add(stack);
+            namespaces.put(stack, namespace);
+        });
+
+        if (!stacks.isEmpty()) {
+            stacks.sort(Comparator.comparing(stack -> stack.getHoverName().getString()));
+            stacks.sort(Comparator.comparing(namespaces::get, Comparator.nullsLast(String::compareTo)));
         }
         return stacks;
     }
 
-    private static void addBadgeStacks(RegistryAccess registryAccess, Set<Object> seenUids, List<ItemStack> stacks) {
-        var registry = registryAccess.registry(CobblemonGymBadges.BADGE_REGISTRY_KEY).orElse(null);
-        if (registry == null) {
-            return;
+    private static boolean alreadyAdded(ItemStack itemStack, List<ItemStack> stacks) {
+        if (itemHelper == null) {
+            return false;
         }
-        for (BadgeDefinition definition : registry) {
-            ResourceLocation badgeId = registry.getKey(definition);
-            if (badgeId == null) {
+        String id = itemHelper.getUniqueId(itemStack, UidContext.Ingredient);
+        for (ItemStack existing : stacks) {
+            if (existing.getItem() != itemStack.getItem()) {
                 continue;
             }
-            ItemStack stack = new ItemStack(CobblemonGymBadges.BADGE_ITEM.get());
-            stack.set(CobblemonGymBadges.BADGE_THEME.get(), badgeId);
-            BadgeItem.applyDefinitionComponents(stack, registryAccess);
-            addCustomStack(stack, seenUids, stacks, registryAccess);
+            String existingId = itemHelper.getUniqueId(existing, UidContext.Ingredient);
+            if (existingId.equals(id)) {
+                return true;
+            }
         }
-    }
-
-    private static void addCustomStack(ItemStack stack, Set<Object> seenUids, List<ItemStack> stacks, RegistryAccess registryAccess) {
-        if (stack == null || stack.isEmpty()) {
-            return;
-        }
-        ItemStack copy = stack.copy();
-        copy.setCount(1);
-        if (copy.getItem() instanceof BadgeItem) {
-            BadgeItem.applyDefinitionComponents(copy, registryAccess);
-        }
-        if (!isCustom(copy)) {
-            return;
-        }
-        Object uid = itemHelper.getUid(copy, UidContext.Ingredient);
-        if (seenUids.add(uid)) {
-            stacks.add(copy);
-        }
-    }
-
-    private static boolean isCustom(ItemStack stack) {
-        ItemStack defaultStack = stack.getItem().getDefaultInstance();
-        return !stack.getComponents().equals(defaultStack.getComponents());
+        return false;
     }
 
     private static boolean hasPermission(BadgeMakingRecipe recipe) {
-        String requiredTheme = BadgeItem.getRequiredTheme(
-            recipe.getResultItem(Minecraft.getInstance().level != null
-                ? Minecraft.getInstance().level.registryAccess()
-                : RegistryAccess.EMPTY
-            ),
-            Minecraft.getInstance().level != null ? Minecraft.getInstance().level.registryAccess() : null
-        );
-        return requiredTheme.isEmpty() || ClientRoleData.hasRole(requiredTheme);
+        RegistryAccess registryAccess = Minecraft.getInstance().level != null
+            ? Minecraft.getInstance().level.registryAccess()
+            : RegistryAccess.EMPTY;
+        String requiredRole = recipe.getRequiredRole(registryAccess);
+        return requiredRole.isEmpty() || ClientRoleData.hasRole(requiredRole);
     }
 
     private static List<BadgeMakingRecipe> getAllRecipes() {
-        Minecraft minecraft = Minecraft.getInstance();
-        if (minecraft.level == null) {
+        RecipeManager recipeManager = CustomItemListCollector.getActiveRecipeManager();
+        if (recipeManager == null) {
             return List.of();
         }
         List<BadgeMakingRecipe> recipes = new ArrayList<>();
-        for (RecipeHolder<BadgeMakingRecipe> holder : minecraft.level.getRecipeManager()
+        for (RecipeHolder<BadgeMakingRecipe> holder : recipeManager
             .getAllRecipesFor(CobblemonGymBadges.BADGEMAKING_RECIPE_TYPE.get())) {
             recipes.add(holder.value());
         }

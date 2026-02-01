@@ -31,6 +31,18 @@ public final class JeiCompat {
         }
     }
 
+    public static void onRecipesUpdated() {
+        if (!ModList.get().isLoaded(JEI_MODID)) {
+            return;
+        }
+        try {
+            Class<?> clazz = Class.forName(PLUGIN_CLASS);
+            clazz.getMethod("onRecipesUpdated").invoke(null);
+        } catch (ReflectiveOperationException exception) {
+            CobblemonGymBadges.LOGGER.debug("Unable to notify JEI about recipe updates", exception);
+        }
+    }
+
     private JeiCompat() {
     }
 }

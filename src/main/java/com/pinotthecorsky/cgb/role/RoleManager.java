@@ -55,12 +55,12 @@ public final class RoleManager {
             if (badgeId == null) {
                 continue;
             }
-            String theme = definition.effectiveTheme(badgeId);
-            if (theme.isEmpty()) {
+            String role = definition.effectiveRole();
+            if (role.isEmpty()) {
                 continue;
             }
-            roles.add(theme);
-            themeToBadges.computeIfAbsent(theme, key -> new ArrayList<>()).add(badgeId);
+            roles.add(role);
+            themeToBadges.computeIfAbsent(role, key -> new ArrayList<>()).add(badgeId);
         }
         logDuplicateThemes(themeToBadges);
         return roles;
