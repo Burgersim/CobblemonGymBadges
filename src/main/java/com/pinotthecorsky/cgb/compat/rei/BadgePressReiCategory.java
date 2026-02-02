@@ -38,11 +38,11 @@ public class BadgePressReiCategory implements DisplayCategory<BadgePressReiDispl
         List<Widget> widgets = new ArrayList<>();
         widgets.add(Widgets.createRecipeBase(bounds));
 
-        Point start = new Point(bounds.getX() + 1, bounds.getY() + 1);
+        Point start = new Point(bounds.getX() + 1, bounds.getY() + 36);
         widgets.add(Widgets.createSlot(new Point(start.x, start.y))
             .entries(display.getInputEntries().get(0))
             .markInput());
-        widgets.add(Widgets.createSlot(new Point(start.x, start.y + 36))
+        widgets.add(Widgets.createSlot(new Point(start.x, start.y + 1))
             .entries(display.getInputEntries().get(1))
             .markInput());
 

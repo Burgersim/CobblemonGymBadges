@@ -9,6 +9,7 @@ Cobblemon Gym Badges adds a Badge Press for crafting custom gym badges (and ribb
 - Datapack + resourcepack support for custom badges and ribbons
 - JEI / EMI / REI integration (only craftable recipes are shown per player)
 - Resourcepack-first design so custom art stays outside the jar
+- This basically includes functionality to see Custom Items in JEI / EMI / REI similar to [Easy Item List](https://modrinth.com/mod/easy-item-list)
 
 ## Using the Badge Press
 
@@ -16,12 +17,30 @@ Cobblemon Gym Badges adds a Badge Press for crafting custom gym badges (and ribb
 2. Put the core ingredient in the top slot and the base ingredient in the bottom slot.
 3. If you have the required role (if any), the badge will appear in the output slot.
 
+## Commands
+
+- /cgb
+  - `add <player> <role>`
+    - adds a Player to the chosen role
+    - e.g. `/cgb add ExamplePlayer fire_gym_leader`
+  - remove `<player> <role>`
+    - removes a Player from the chosen role
+    - e.g. `cgb remove ExamplePlayer fire_gym_leader`
+  - `list`
+    - e.g. `/cgb list`
+    - lists all roles and the players assigned to them
+
+**Info:** Roles can have multiple Players, so more than one Player canbe able to craft the Badges assined to that role/theme.
+
 ## Creating Custom Badges (Datapack + Resourcepack)
 
 You need two parts:
 
-1) A datapack for badge definitions and recipes  
+1) A datapack for badge definitions and recipes
 2) A resourcepack for models and textures
+
+<details>
+  <summary>Information on Datapacks / Resourcepacks</summary>
 
 ### Datapack: Badge Definitions
 
@@ -60,11 +79,11 @@ Field overview:
 - `tags` (optional): Extra item tags to apply to the badge item.
 - `model_data` (optional): Custom model data value. If omitted, the mod auto-assigns a unique value per badgebox type.
 - `model` or `texture` (optional): Item model id to use. If you set `texture` only, the mod generates the item model.
-- `badgebox` (optional): `none`, `badge`, or `ribbon`.  
-  - This controls **which BadgeBox tag** the item gets.  
-  - `badge` is the default (adds `badgebox:badges`).  
-  - `ribbon` adds `badgebox:ribbons`.  
-  - `none` adds no BadgeBox tag.  
+- `badgebox` (optional): `none`, `badge`, or `ribbon`.
+  - This controls **which BadgeBox tag** the item gets.
+  - `badge` is the default (adds `badgebox:badges`).
+  - `ribbon` adds `badgebox:ribbons`.
+  - `none` adds no BadgeBox tag.
   - The tag names come from the BadgeBox mod and are fixed; this field hides that complexity.
 
 ### Datapack: Badge Recipes
@@ -83,7 +102,7 @@ Example:
 }
 ```
 
-- `core` = top slot in the Badge Press  
+- `core` = top slot in the Badge Press
 - `base` = bottom slot in the Badge Press
 
 ### Resourcepack: Models + Textures
@@ -121,10 +140,4 @@ You can still set `model_data` manually if you need stable IDs across packs, but
 - If you set `model_data` manually, ensure each badge has a unique number per badgebox type.
   Otherwise, let the mod auto-assign it.
 
-## Technical Details (Advanced)
-
-- Recipe type: `cgb:badgemaking`
-- Recipe result supports `badge` id or `theme` lookup.
-- Badge definitions are loaded from the `cgb:badge` datapack registry.
-- BadgeBox tags are applied via the item type chosen by `badgebox`.
-- The client injects a hidden generated resourcepack to build badge/ribbon model overrides from datapack definitions.
+</details>

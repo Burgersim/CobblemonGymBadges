@@ -36,6 +36,7 @@ public class CgbEmiPlugin implements EmiPlugin {
         registry.addRecipeHandler(CobblemonGymBadges.BADGE_PRESS_MENU.get(), new BadgePressEmiRecipeHandler());
         registerBadgePressRecipes(registry);
         refreshItemList(registry, registry.getRecipeManager(), CustomItemListCollector.getActiveRegistryAccess());
+        hideTemplateItems(registry);
     }
 
     public static void onRecipesUpdated() {
@@ -60,9 +61,29 @@ public class CgbEmiPlugin implements EmiPlugin {
         }
     }
 
+    private static void hideTemplateItems(EmiRegistry registry) {
+        registry.removeEmiStacks(CgbEmiPlugin::isTemplateStack);
+    }
+
+    private static boolean isTemplateStack(EmiStack stack) {
+        ItemStack itemStack = stack.getItemStack();
+        if (itemStack.isEmpty()) {
+            return false;
+        }
+        if (itemStack.get(CobblemonGymBadges.BADGE_THEME.get()) != null) {
+            return false;
+        }
+        return itemStack.getItem() == CobblemonGymBadges.BADGE_ITEM.get()
+            || itemStack.getItem() == CobblemonGymBadges.BADGE_RIBBON_ITEM.get()
+            || itemStack.getItem() == CobblemonGymBadges.BADGE_UNTAGGED_ITEM.get();
+    }
+
     private static List<EmiStack> collectCustomStacks(RecipeManager recipeManager, RegistryAccess registryAccess) {
         List<EmiStack> stacks = new ArrayList<>();
         CustomItemListCollector.scanRecipes(recipeManager, registryAccess, (stack, namespace) -> {
+            if (isTemplateItem(stack)) {
+                return;
+            }
             EmiStack emiStack = EmiStack.of(stack);
             if (alreadyAdded(emiStack, stacks)) {
                 return;
@@ -73,12 +94,7 @@ public class CgbEmiPlugin implements EmiPlugin {
     }
 
     private static boolean alreadyAdded(EmiStack candidate, List<EmiStack> stacks) {
-        ItemStack candidateStack = candidate.getItemStack();
         for (EmiStack existing : stacks) {
-            ItemStack existingStack = existing.getItemStack();
-            if (existingStack.getItem() != candidateStack.getItem()) {
-                continue;
-            }
             if (COMPARISON.compare(candidate, existing)) {
                 return true;
             }
@@ -86,12 +102,20 @@ public class CgbEmiPlugin implements EmiPlugin {
         return false;
     }
 
+    private static boolean isTemplateItem(ItemStack stack) {
+        return stack.getItem() == CobblemonGymBadges.BADGE_ITEM.get()
+            || stack.getItem() == CobblemonGymBadges.BADGE_RIBBON_ITEM.get()
+            || stack.getItem() == CobblemonGymBadges.BADGE_UNTAGGED_ITEM.get();
+    }
+
     private static void registerBadgePressRecipes(EmiRegistry registry) {
         RecipeManager recipeManager = registry.getRecipeManager();
         if (recipeManager == null) {
             return;
         }
-        RegistryAccess registryAccess = CustomItemListCollector.getActiveRegistryAccess();
+        RegistryAccess registryAccess = net.minecraft.client.Minecraft.getInstance().level != null
+            ? net.minecraft.client.Minecraft.getInstance().level.registryAccess()
+            : RegistryAccess.EMPTY;
         for (RecipeHolder<BadgeMakingRecipe> holder : recipeManager.getAllRecipesFor(CobblemonGymBadges.BADGEMAKING_RECIPE_TYPE.get())) {
             if (!hasPermission(holder.value(), registryAccess)) {
                 continue;

@@ -116,6 +116,7 @@ public class CgbJeiPlugin implements IModPlugin {
         itemHelper = ingredientManager.getIngredientHelper(VanillaTypes.ITEM_STACK);
         refreshVisibility();
         refreshItemListFromLevel();
+        hideTemplateItems();
     }
 
     @Override
@@ -140,6 +141,29 @@ public class CgbJeiPlugin implements IModPlugin {
         refreshItemListFromLevel();
     }
 
+    private static void refreshItemListFromLevel() {
+        if (ingredientManager == null || itemHelper == null) {
+            return;
+        }
+        RecipeManager recipeManager = CustomItemListCollector.getActiveRecipeManager();
+        if (recipeManager == null) {
+            return;
+        }
+        refreshItemList(recipeManager, CustomItemListCollector.getActiveRegistryAccess());
+    }
+
+    private static void refreshItemList(RecipeManager recipeManager, RegistryAccess registryAccess) {
+        List<ItemStack> newStacks = collectCustomStacks(recipeManager, registryAccess);
+        if (!addedStacks.isEmpty()) {
+            ingredientManager.removeIngredientsAtRuntime(VanillaTypes.ITEM_STACK, addedStacks);
+        }
+        addedStacks = List.copyOf(newStacks);
+        if (!addedStacks.isEmpty()) {
+            ingredientManager.addIngredientsAtRuntime(VanillaTypes.ITEM_STACK, addedStacks);
+        }
+        hideTemplateItems();
+    }
+
     private static void refreshVisibility() {
         if (runtime == null || registeredRecipes.isEmpty()) {
             return;
@@ -162,33 +186,42 @@ public class CgbJeiPlugin implements IModPlugin {
         }
     }
 
-    private static void refreshItemListFromLevel() {
-        if (ingredientManager == null || itemHelper == null) {
+    private static void hideTemplateItems() {
+        if (ingredientManager == null) {
             return;
         }
-        RecipeManager recipeManager = CustomItemListCollector.getActiveRecipeManager();
-        if (recipeManager == null) {
-            return;
+        List<ItemStack> templateStacks = getTemplateStacks();
+        if (!templateStacks.isEmpty()) {
+            ingredientManager.removeIngredientsAtRuntime(VanillaTypes.ITEM_STACK, templateStacks);
         }
-        refreshItemList(recipeManager, CustomItemListCollector.getActiveRegistryAccess());
     }
 
-    private static void refreshItemList(RecipeManager recipeManager, RegistryAccess registryAccess) {
-        List<ItemStack> newStacks = collectCustomStacks(recipeManager, registryAccess);
-        if (!addedStacks.isEmpty()) {
-            ingredientManager.removeIngredientsAtRuntime(VanillaTypes.ITEM_STACK, addedStacks);
-        }
-        addedStacks = List.copyOf(newStacks);
-        if (!addedStacks.isEmpty()) {
-            ingredientManager.addIngredientsAtRuntime(VanillaTypes.ITEM_STACK, addedStacks);
+    private static List<ItemStack> getTemplateStacks() {
+        try {
+            return List.of(
+                new ItemStack(CobblemonGymBadges.BADGE_ITEM.get()),
+                new ItemStack(CobblemonGymBadges.BADGE_RIBBON_ITEM.get()),
+                new ItemStack(CobblemonGymBadges.BADGE_UNTAGGED_ITEM.get())
+            );
+        } catch (Exception ignored) {
+            return List.of();
         }
     }
 
     private static List<ItemStack> collectCustomStacks(RecipeManager recipeManager, RegistryAccess registryAccess) {
         List<ItemStack> stacks = new ArrayList<>();
         Map<ItemStack, String> namespaces = new HashMap<>();
+        Map<String, Boolean> existingIds = new HashMap<>();
+        for (ItemStack existing : ingredientManager.getAllIngredients(VanillaTypes.ITEM_STACK)) {
+            String id = itemHelper.getUniqueId(existing, UidContext.Ingredient);
+            existingIds.put(id, Boolean.TRUE);
+        }
         CustomItemListCollector.scanRecipes(recipeManager, registryAccess, (stack, namespace) -> {
             if (alreadyAdded(stack, stacks)) {
+                return;
+            }
+            String id = itemHelper.getUniqueId(stack, UidContext.Ingredient);
+            if (existingIds.containsKey(id)) {
                 return;
             }
             stacks.add(stack);
@@ -203,9 +236,6 @@ public class CgbJeiPlugin implements IModPlugin {
     }
 
     private static boolean alreadyAdded(ItemStack itemStack, List<ItemStack> stacks) {
-        if (itemHelper == null) {
-            return false;
-        }
         String id = itemHelper.getUniqueId(itemStack, UidContext.Ingredient);
         for (ItemStack existing : stacks) {
             if (existing.getItem() != itemStack.getItem()) {

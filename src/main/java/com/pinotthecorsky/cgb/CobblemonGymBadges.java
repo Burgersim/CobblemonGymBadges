@@ -3,6 +3,9 @@ package com.pinotthecorsky.cgb;
 import com.mojang.logging.LogUtils;
 import com.pinotthecorsky.cgb.badge.BadgeDefinition;
 import com.pinotthecorsky.cgb.badge.BadgeItem;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 import com.pinotthecorsky.cgb.block.BadgePressBlock;
 import com.pinotthecorsky.cgb.block.entity.BadgePressBlockEntity;
 import com.pinotthecorsky.cgb.command.CgbCommands;
@@ -11,6 +14,8 @@ import com.pinotthecorsky.cgb.network.RoleSyncEvents;
 import com.pinotthecorsky.cgb.menu.BadgePressMenu;
 import com.pinotthecorsky.cgb.recipe.BadgeMakingRecipe;
 import net.minecraft.core.Registry;
+import net.minecraft.core.Holder;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
@@ -22,6 +27,7 @@ import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.item.crafting.RecipeType;
@@ -116,8 +122,8 @@ public class CobblemonGymBadges {
             .withTabsBefore(CreativeModeTabs.COMBAT)
             .icon(() -> BADGE_PRESS_ITEM.get().getDefaultInstance())
             .displayItems((parameters, output) -> {
-                output.accept(BADGE_PRESS_ITEM.get()); // Add the example item to the tab. For your own tabs, this method is preferred over the event
-                output.accept(BADGE_ITEM.get());
+                output.accept(BADGE_PRESS_ITEM.get());
+                addBadgeStacks(parameters.holders(), output);
             }).build());
 
     // The constructor for the mod class is the first code that is run when your mod is loaded.
@@ -171,6 +177,30 @@ public class CobblemonGymBadges {
     private void addCreative(BuildCreativeModeTabContentsEvent event) {
         if (event.getTabKey() == CreativeModeTabs.BUILDING_BLOCKS) {
             event.accept(BADGE_PRESS_ITEM);
+        }
+    }
+
+    private static void addBadgeStacks(HolderLookup.Provider registries, CreativeModeTab.Output output) {
+        if (registries == null) {
+            return;
+        }
+        var registry = registries.lookupOrThrow(BADGE_REGISTRY_KEY);
+        List<ItemStack> stacks = new ArrayList<>();
+        var iterator = registry.listElements().iterator();
+        while (iterator.hasNext()) {
+            Holder.Reference<BadgeDefinition> holder = iterator.next();
+            ResourceLocation badgeId = holder.key().location();
+            ItemStack stack = BadgeItem.createBadgeStack(badgeId, registries);
+            if (!stack.isEmpty()) {
+                stacks.add(stack);
+            }
+        }
+        stacks.sort(Comparator.comparing(stack -> {
+            ResourceLocation badgeId = stack.get(BADGE_THEME.get());
+            return badgeId != null ? badgeId.toString() : stack.getHoverName().getString();
+        }, String.CASE_INSENSITIVE_ORDER));
+        for (ItemStack stack : stacks) {
+            output.accept(stack);
         }
     }
 

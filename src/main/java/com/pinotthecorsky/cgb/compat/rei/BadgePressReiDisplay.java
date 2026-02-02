@@ -1,7 +1,9 @@
 package com.pinotthecorsky.cgb.compat.rei;
 
+import com.pinotthecorsky.cgb.CobblemonGymBadges;
 import com.pinotthecorsky.cgb.badge.BadgeItem;
 import com.pinotthecorsky.cgb.recipe.BadgeMakingRecipe;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import me.shedaniel.rei.api.common.category.CategoryIdentifier;
@@ -12,6 +14,7 @@ import net.minecraft.core.RegistryAccess;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.RecipeHolder;
+import net.minecraft.world.item.crafting.Ingredient;
 
 public class BadgePressReiDisplay extends BasicDisplay {
     private final RecipeHolder<BadgeMakingRecipe> holder;
@@ -50,8 +53,8 @@ public class BadgePressReiDisplay extends BasicDisplay {
     private static List<EntryIngredient> buildInputs(RecipeHolder<BadgeMakingRecipe> holder) {
         BadgeMakingRecipe recipe = holder.value();
         return List.of(
-            EntryIngredients.ofIngredient(recipe.getCoreIngredient()),
-            EntryIngredients.ofIngredient(recipe.getBaseIngredient())
+            filterTemplateItems(recipe.getCoreIngredient()),
+            filterTemplateItems(recipe.getBaseIngredient())
         );
     }
 
@@ -69,5 +72,30 @@ public class BadgePressReiDisplay extends BasicDisplay {
             BadgeItem.applyDefinitionComponents(output, registryAccess);
         }
         return output;
+    }
+
+    private static EntryIngredient filterTemplateItems(Ingredient ingredient) {
+        List<ItemStack> stacks = new ArrayList<>();
+        for (ItemStack stack : ingredient.getItems()) {
+            if (stack.isEmpty()) {
+                continue;
+            }
+            if (!isTemplateStack(stack)) {
+                stacks.add(stack);
+            }
+        }
+        if (stacks.isEmpty()) {
+            return EntryIngredient.empty();
+        }
+        return EntryIngredients.ofItemStacks(stacks);
+    }
+
+    private static boolean isTemplateStack(ItemStack stack) {
+        if (stack.get(CobblemonGymBadges.BADGE_THEME.get()) != null) {
+            return false;
+        }
+        return stack.getItem() == CobblemonGymBadges.BADGE_ITEM.get()
+            || stack.getItem() == CobblemonGymBadges.BADGE_RIBBON_ITEM.get()
+            || stack.getItem() == CobblemonGymBadges.BADGE_UNTAGGED_ITEM.get();
     }
 }

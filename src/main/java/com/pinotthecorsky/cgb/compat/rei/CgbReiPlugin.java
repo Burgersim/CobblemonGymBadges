@@ -22,6 +22,7 @@ import me.shedaniel.rei.api.common.util.EntryStacks;
 import me.shedaniel.rei.api.client.registry.transfer.TransferHandlerRegistry;
 import me.shedaniel.rei.api.client.registry.transfer.simple.SimpleTransferHandler;
 import me.shedaniel.rei.forge.REIPluginClient;
+import net.minecraft.client.Minecraft;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.RecipeManager;
@@ -48,7 +49,9 @@ public class CgbReiPlugin implements REIClientPlugin {
 
     @Override
     public void registerDisplays(DisplayRegistry registry) {
-        RegistryAccess registryAccess = CustomItemListCollector.getActiveRegistryAccess();
+        RegistryAccess registryAccess = Minecraft.getInstance().level != null
+            ? Minecraft.getInstance().level.registryAccess()
+            : RegistryAccess.EMPTY;
         registry.registerRecipeFiller(
             BadgeMakingRecipe.class,
             type -> type == CobblemonGymBadges.BADGEMAKING_RECIPE_TYPE.get(),
@@ -118,11 +121,21 @@ public class CgbReiPlugin implements REIClientPlugin {
         if (!addedEntries.isEmpty()) {
             target.addEntries(addedEntries);
         }
+        hideTemplateEntries(target);
         STACK_HASHES.clear();
         for (ItemStack stack : addedStacks) {
             STACK_HASHES.add(hash(stack));
         }
         target.refilter();
+    }
+
+    private static void hideTemplateEntries(EntryRegistry target) {
+        ItemStack badge = new ItemStack(CobblemonGymBadges.BADGE_ITEM.get());
+        ItemStack ribbon = new ItemStack(CobblemonGymBadges.BADGE_RIBBON_ITEM.get());
+        ItemStack untagged = new ItemStack(CobblemonGymBadges.BADGE_UNTAGGED_ITEM.get());
+        target.removeEntry(EntryStacks.of(badge));
+        target.removeEntry(EntryStacks.of(ribbon));
+        target.removeEntry(EntryStacks.of(untagged));
     }
 
     private static EntryCollection collectCustomEntries(
@@ -158,4 +171,5 @@ public class CgbReiPlugin implements REIClientPlugin {
 
     private record EntryCollection(List<EntryStack<?>> entries, List<ItemStack> stacks) {
     }
+
 }
