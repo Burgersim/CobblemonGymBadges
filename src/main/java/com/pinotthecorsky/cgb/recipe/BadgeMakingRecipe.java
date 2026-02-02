@@ -89,6 +89,11 @@ public class BadgeMakingRecipe implements Recipe<BadgePressRecipeInput> {
     }
 
     @Override
+    public boolean isSpecial() {
+        return true;
+    }
+
+    @Override
     public NonNullList<Ingredient> getIngredients() {
         NonNullList<Ingredient> ingredients = NonNullList.create();
         ingredients.add(this.coreIngredient);

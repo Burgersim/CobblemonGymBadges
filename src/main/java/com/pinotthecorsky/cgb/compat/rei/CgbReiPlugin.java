@@ -19,10 +19,13 @@ import me.shedaniel.rei.api.common.entry.comparison.ComparisonContext;
 import me.shedaniel.rei.api.common.entry.comparison.EntryComparator;
 import me.shedaniel.rei.api.common.entry.comparison.ItemComparatorRegistry;
 import me.shedaniel.rei.api.common.util.EntryStacks;
+import me.shedaniel.rei.api.client.registry.transfer.TransferHandlerRegistry;
+import me.shedaniel.rei.api.client.registry.transfer.simple.SimpleTransferHandler;
 import me.shedaniel.rei.forge.REIPluginClient;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.RecipeManager;
+import com.pinotthecorsky.cgb.menu.BadgePressMenu;
 
 @REIPluginClient
 public class CgbReiPlugin implements REIClientPlugin {
@@ -64,6 +67,15 @@ public class CgbReiPlugin implements REIClientPlugin {
             }
             return EventResult.pass();
         });
+    }
+
+    @Override
+    public void registerTransferHandlers(TransferHandlerRegistry registry) {
+        registry.register(SimpleTransferHandler.create(
+            BadgePressMenu.class,
+            BadgePressReiCategory.ID,
+            new SimpleTransferHandler.IntRange(BadgePressMenu.SLOT_INPUT_CORE, BadgePressMenu.SLOT_INPUT_BASE + 1)
+        ));
     }
 
     @Override

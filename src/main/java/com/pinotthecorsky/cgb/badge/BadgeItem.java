@@ -2,14 +2,11 @@ package com.pinotthecorsky.cgb.badge;
 
 import com.pinotthecorsky.cgb.CobblemonGymBadges;
 import java.util.List;
-import java.util.Optional;
 import javax.annotation.Nullable;
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderLookup;
-import net.minecraft.core.component.DataComponentType;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.core.component.DataComponents;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.core.RegistryAccess;
@@ -126,12 +123,9 @@ public class BadgeItem extends Item {
         if (!stack.has(DataComponents.ITEM_NAME)) {
             stack.set(DataComponents.ITEM_NAME, definition.displayName(badgeId));
         }
-        Optional<ResourceLocation> model = definition.resolvedModel();
-        if (model.isPresent()) {
-            setItemModel(stack, model.get());
-        }
-        if (!stack.has(DataComponents.CUSTOM_MODEL_DATA) && definition.modelData() > 0) {
-            stack.set(DataComponents.CUSTOM_MODEL_DATA, new CustomModelData(definition.modelData()));
+        BadgeModelIndex.Entry modelEntry = BadgeModelIndex.getOrCreate(registries).get(badgeId);
+        if (modelEntry != null && !stack.has(DataComponents.CUSTOM_MODEL_DATA) && modelEntry.modelData() > 0) {
+            stack.set(DataComponents.CUSTOM_MODEL_DATA, new CustomModelData(modelEntry.modelData()));
         }
     }
 
@@ -182,18 +176,4 @@ public class BadgeItem extends Item {
         };
     }
 
-    private static void setItemModel(ItemStack stack, ResourceLocation modelId) {
-        DataComponentType<?> itemModelType = BuiltInRegistries.DATA_COMPONENT_TYPE.get(
-            ResourceLocation.fromNamespaceAndPath("minecraft", "item_model")
-        );
-        if (itemModelType == null || stack.has(itemModelType)) {
-            return;
-        }
-        stack.set(castComponent(itemModelType), modelId);
-    }
-
-    @SuppressWarnings("unchecked")
-    private static DataComponentType<Object> castComponent(DataComponentType<?> type) {
-        return (DataComponentType<Object>) type;
-    }
 }

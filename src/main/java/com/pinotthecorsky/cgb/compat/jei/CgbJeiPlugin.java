@@ -19,6 +19,7 @@ import mezz.jei.api.ingredients.subtypes.ISubtypeInterpreter;
 import mezz.jei.api.ingredients.subtypes.UidContext;
 import mezz.jei.api.recipe.IRecipeManager;
 import mezz.jei.api.recipe.RecipeType;
+import mezz.jei.api.registration.IRecipeTransferRegistration;
 import mezz.jei.api.registration.IRecipeCatalystRegistration;
 import mezz.jei.api.registration.IRecipeCategoryRegistration;
 import mezz.jei.api.registration.IRecipeRegistration;
@@ -35,8 +36,10 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.RecipeManager;
+import com.pinotthecorsky.cgb.menu.BadgePressMenu;
 
 @JeiPlugin
+@SuppressWarnings("removal")
 public class CgbJeiPlugin implements IModPlugin {
     public static final RecipeType<BadgeMakingRecipe> BADGE_MAKING_TYPE = new RecipeType<>(
         ResourceLocation.fromNamespaceAndPath(CobblemonGymBadges.MODID, "badgemaking"),
@@ -91,6 +94,19 @@ public class CgbJeiPlugin implements IModPlugin {
     @Override
     public void registerRecipeCatalysts(IRecipeCatalystRegistration registration) {
         registration.addRecipeCatalyst(new ItemStack(CobblemonGymBadges.BADGE_PRESS_ITEM.get()), BADGE_MAKING_TYPE);
+    }
+
+    @Override
+    public void registerRecipeTransferHandlers(IRecipeTransferRegistration registration) {
+        registration.addRecipeTransferHandler(
+            BadgePressMenu.class,
+            CobblemonGymBadges.BADGE_PRESS_MENU.get(),
+            BADGE_MAKING_TYPE,
+            BadgePressMenu.SLOT_INPUT_CORE,
+            2,
+            3,
+            36
+        );
     }
 
     @Override

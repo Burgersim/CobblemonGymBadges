@@ -33,6 +33,7 @@ public class CgbEmiPlugin implements EmiPlugin {
     public void register(EmiRegistry registry) {
         registry.addCategory(BADGE_PRESS_CATEGORY);
         registry.addWorkstation(BADGE_PRESS_CATEGORY, EmiStack.of(new ItemStack(CobblemonGymBadges.BADGE_PRESS_ITEM.get())));
+        registry.addRecipeHandler(CobblemonGymBadges.BADGE_PRESS_MENU.get(), new BadgePressEmiRecipeHandler());
         registerBadgePressRecipes(registry);
         refreshItemList(registry, registry.getRecipeManager(), CustomItemListCollector.getActiveRegistryAccess());
     }

@@ -50,8 +50,8 @@ public class BadgePressReiDisplay extends BasicDisplay {
     private static List<EntryIngredient> buildInputs(RecipeHolder<BadgeMakingRecipe> holder) {
         BadgeMakingRecipe recipe = holder.value();
         return List.of(
-            EntryIngredients.ofIngredient(recipe.getBaseIngredient()),
-            EntryIngredients.ofIngredient(recipe.getCoreIngredient())
+            EntryIngredients.ofIngredient(recipe.getCoreIngredient()),
+            EntryIngredients.ofIngredient(recipe.getBaseIngredient())
         );
     }
 

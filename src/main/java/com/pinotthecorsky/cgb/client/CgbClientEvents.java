@@ -1,5 +1,6 @@
 package com.pinotthecorsky.cgb.client;
 
+import com.pinotthecorsky.cgb.client.resources.BadgeModelPack;
 import com.pinotthecorsky.cgb.compat.EmiCompat;
 import com.pinotthecorsky.cgb.compat.JeiCompat;
 import com.pinotthecorsky.cgb.compat.ReiCompat;
@@ -17,6 +18,10 @@ public final class CgbClientEvents {
     }
 
     public static void onTagsUpdated(TagsUpdatedEvent event) {
+        BadgeModelPack.updateRegistries(event.getRegistryAccess());
+        if (event.shouldUpdateStaticData()) {
+            BadgeModelPack.requestReload();
+        }
         Minecraft.getInstance().execute(() -> {
             JeiCompat.onRecipesUpdated();
             EmiCompat.onRecipesUpdated();
