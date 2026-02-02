@@ -43,6 +43,7 @@ jobs:
           fi
 
           bump=""
+          shopt -s nocasematch
           while IFS= read -r subject; do
             if [[ "$subject" =~ ^(feat!|feat\\(.+\\)!|major)(:|\\s) ]]; then
               bump="major"
@@ -60,6 +61,7 @@ jobs:
               fi
             fi
           done < <(git log --pretty=%s $range)
+          shopt -u nocasematch
 
           if [[ -z "$bump" ]]; then
             echo "No version bump keywords found; skipping."
