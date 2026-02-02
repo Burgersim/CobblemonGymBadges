@@ -27,10 +27,10 @@ public class BadgePressMenu extends AbstractContainerMenu implements ContainerLi
     public static final int SLOT_INPUT_CORE = 0;
     public static final int SLOT_INPUT_BASE = 1;
     public static final int SLOT_OUTPUT = 2;
-    private static final int SLOT_INPUT_CORE_X = 56;
-    private static final int SLOT_INPUT_CORE_Y = 17;
     private static final int SLOT_INPUT_BASE_X = 56;
-    private static final int SLOT_INPUT_BASE_Y = 53;
+    private static final int SLOT_INPUT_BASE_Y = 17;
+    private static final int SLOT_INPUT_CORE_X = 56;
+    private static final int SLOT_INPUT_CORE_Y = 53;
     private static final int SLOT_OUTPUT_X = 116;
     private static final int SLOT_OUTPUT_Y = 35;
 

@@ -3,6 +3,8 @@
   "block.cgb.example_block": "Example Block",
   "block.cgb.badge_press": "Badge Press",
   "item.cgb.badge": "Badge",
+  "item.cgb.badge_ribbon": "Badge",
+  "item.cgb.badge_untagged": "Badge",
   "item.cgb.example_item": "Example Item",
   "container.cgb.badge_press": "Badge Press",
   "emi.category.cgb.badge_press": "Badge Press",

@@ -82,6 +82,8 @@ public class CobblemonGymBadges {
     public static final DeferredItem<BlockItem> BADGE_PRESS_ITEM = ITEMS.registerSimpleBlockItem("badge_press", BADGE_PRESS);
 
     public static final DeferredItem<Item> BADGE_ITEM = ITEMS.register("badge", () -> new BadgeItem(new Item.Properties().stacksTo(1)));
+    public static final DeferredItem<Item> BADGE_RIBBON_ITEM = ITEMS.register("badge_ribbon", () -> new BadgeItem(new Item.Properties().stacksTo(1)));
+    public static final DeferredItem<Item> BADGE_UNTAGGED_ITEM = ITEMS.register("badge_untagged", () -> new BadgeItem(new Item.Properties().stacksTo(1)));
 
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<ResourceLocation>> BADGE_THEME =
         DATA_COMPONENTS.register(

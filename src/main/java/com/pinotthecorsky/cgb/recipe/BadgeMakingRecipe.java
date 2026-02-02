@@ -144,10 +144,7 @@ public class BadgeMakingRecipe implements Recipe<BadgePressRecipeInput> {
             if (badgeId == null) {
                 return ItemStack.EMPTY;
             }
-            ItemStack stack = new ItemStack(CobblemonGymBadges.BADGE_ITEM.get());
-            stack.set(CobblemonGymBadges.BADGE_THEME.get(), badgeId);
-            BadgeItem.applyDefinitionComponents(stack, registries);
-            return stack;
+            return BadgeItem.createBadgeStack(badgeId, registries);
         }
     }
 

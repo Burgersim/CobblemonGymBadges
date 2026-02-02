@@ -107,6 +107,13 @@ public class BadgeItem extends Item {
         return java.util.Optional.ofNullable(match);
     }
 
+    public static ItemStack createBadgeStack(ResourceLocation badgeId, @Nullable HolderLookup.Provider registries) {
+        ItemStack stack = new ItemStack(selectItemForBadge(badgeId, registries));
+        stack.set(CobblemonGymBadges.BADGE_THEME.get(), badgeId);
+        applyDefinitionComponents(stack, registries);
+        return stack;
+    }
+
     public static void applyDefinitionComponents(ItemStack stack, @Nullable HolderLookup.Provider registries) {
         ResourceLocation badgeId = stack.get(CobblemonGymBadges.BADGE_THEME.get());
         if (badgeId == null || registries == null) {
@@ -158,6 +165,21 @@ public class BadgeItem extends Item {
         var registry = registries.lookupOrThrow(CobblemonGymBadges.BADGE_REGISTRY_KEY);
         ResourceKey<BadgeDefinition> key = ResourceKey.create(CobblemonGymBadges.BADGE_REGISTRY_KEY, badgeId);
         return registry.get(key).map(Holder.Reference::value).orElse(null);
+    }
+
+    private static Item selectItemForBadge(ResourceLocation badgeId, @Nullable HolderLookup.Provider registries) {
+        if (registries == null) {
+            return CobblemonGymBadges.BADGE_ITEM.get();
+        }
+        BadgeDefinition definition = lookupDefinition(registries, badgeId);
+        if (definition == null) {
+            return CobblemonGymBadges.BADGE_ITEM.get();
+        }
+        return switch (definition.badgebox()) {
+            case NONE -> CobblemonGymBadges.BADGE_UNTAGGED_ITEM.get();
+            case RIBBON -> CobblemonGymBadges.BADGE_RIBBON_ITEM.get();
+            case BADGE -> CobblemonGymBadges.BADGE_ITEM.get();
+        };
     }
 
     private static void setItemModel(ItemStack stack, ResourceLocation modelId) {
