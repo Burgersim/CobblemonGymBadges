@@ -26,8 +26,8 @@ public class BadgePressEmiRecipe extends BasicEmiRecipe {
         this.holder = holder;
         BadgeMakingRecipe recipe = holder.value();
 
-        this.inputs.add(EmiIngredient.of(recipe.getCoreIngredient()));
         this.inputs.add(EmiIngredient.of(recipe.getBaseIngredient()));
+        this.inputs.add(EmiIngredient.of(recipe.getCoreIngredient()));
 
         ItemStack output = recipe.getResultItem(registryAccess).copy();
         if (output.getItem() instanceof BadgeItem) {
