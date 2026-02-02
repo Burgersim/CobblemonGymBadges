@@ -44,10 +44,10 @@ public class BadgePressEmiRecipe extends BasicEmiRecipe {
 
     @Override
     public void addWidgets(WidgetHolder widgets) {
-        widgets.addSlot(inputs.get(1), 1, 1).drawBack(true);
-        widgets.addSlot(inputs.get(0), 1, 37).drawBack(true);
+        widgets.addSlot(inputs.get(0), 1, 1).drawBack(true);
+        widgets.addSlot(inputs.get(1), 1, 37).drawBack(true);
         if (!outputs.isEmpty()) {
-            widgets.addSlot(outputs.get(0), 61, 19).drawBack(true).recipeContext(this);
+            widgets.addSlot(outputs.getFirst(), 61, 19).drawBack(true).recipeContext(this);
         } else {
             widgets.addSlot(61, 19).drawBack(true).recipeContext(this);
         }

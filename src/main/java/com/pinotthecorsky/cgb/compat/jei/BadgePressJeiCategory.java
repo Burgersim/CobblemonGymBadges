@@ -16,6 +16,7 @@ import net.minecraft.core.RegistryAccess;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
+import org.jetbrains.annotations.NotNull;
 
 public class BadgePressJeiCategory extends AbstractRecipeCategory<BadgeMakingRecipe> {
     private static final int WIDTH = 82;
@@ -32,15 +33,15 @@ public class BadgePressJeiCategory extends AbstractRecipeCategory<BadgeMakingRec
     }
 
     @Override
-    public void setRecipe(IRecipeLayoutBuilder builder, BadgeMakingRecipe recipe, IFocusGroup focuses) {
+    public void setRecipe(IRecipeLayoutBuilder builder, BadgeMakingRecipe recipe, @NotNull IFocusGroup focuses) {
         List<ItemStack> coreStacks = filterTemplateItems(recipe.getCoreIngredient());
-        var coreSlot = builder.addSlot(RecipeIngredientRole.INPUT, 1, 37)
+        var coreSlot = builder.addSlot(RecipeIngredientRole.INPUT, 1, 1)
             .setStandardSlotBackground();
         if (!coreStacks.isEmpty()) {
             coreSlot.addItemStacks(coreStacks);
         }
         List<ItemStack> baseStacks = filterTemplateItems(recipe.getBaseIngredient());
-        var baseSlot = builder.addSlot(RecipeIngredientRole.INPUT, 1, 1)
+        var baseSlot = builder.addSlot(RecipeIngredientRole.INPUT, 1, 37)
             .setStandardSlotBackground();
         if (!baseStacks.isEmpty()) {
             baseSlot.addItemStacks(baseStacks);
@@ -60,7 +61,7 @@ public class BadgePressJeiCategory extends AbstractRecipeCategory<BadgeMakingRec
     }
 
     @Override
-    public void createRecipeExtras(IRecipeExtrasBuilder builder, BadgeMakingRecipe recipe, IFocusGroup focuses) {
+    public void createRecipeExtras(IRecipeExtrasBuilder builder, @NotNull BadgeMakingRecipe recipe, @NotNull IFocusGroup focuses) {
         builder.addAnimatedRecipeArrow(200).setPosition(26, 17);
     }
 
