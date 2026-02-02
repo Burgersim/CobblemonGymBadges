@@ -141,3 +141,4 @@ You can still set `model_data` manually if you need stable IDs across packs, but
   Otherwise, let the mod auto-assign it.
 
 </details>
+
