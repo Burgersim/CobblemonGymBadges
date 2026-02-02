@@ -128,17 +128,19 @@ public class CgbJeiPlugin implements IModPlugin {
     }
 
     public static void onRecipesUpdated() {
-        registeredRecipes = List.copyOf(getAllRecipes());
-        refreshVisibility();
-        refreshItemListFromLevel();
+        runOnClientThread(() -> {
+            registeredRecipes = List.copyOf(getAllRecipes());
+            refreshVisibility();
+            refreshItemListFromLevel();
+        });
     }
 
     public static void onRolesChanged() {
-        refreshVisibility();
+        runOnClientThread(CgbJeiPlugin::refreshVisibility);
     }
 
     public static void onBadgesChanged() {
-        refreshItemListFromLevel();
+        runOnClientThread(CgbJeiPlugin::refreshItemListFromLevel);
     }
 
     private static void refreshItemListFromLevel() {
@@ -162,6 +164,13 @@ public class CgbJeiPlugin implements IModPlugin {
             ingredientManager.addIngredientsAtRuntime(VanillaTypes.ITEM_STACK, addedStacks);
         }
         hideTemplateItems();
+    }
+
+    private static void runOnClientThread(Runnable task) {
+        Minecraft minecraft = Minecraft.getInstance();
+        if (minecraft != null) {
+            minecraft.execute(task);
+        }
     }
 
     private static void refreshVisibility() {

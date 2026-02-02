@@ -7,9 +7,9 @@ Cobblemon Gym Badges adds a Badge Press for crafting custom gym badges (and ribb
 - Badge Press block with a dedicated crafting UI
 - Gym Leader roles to gate badge crafting
 - Datapack + resourcepack support for custom badges and ribbons
-- JEI / EMI / REI integration (only craftable recipes are shown per player)
+- JEI / EMI integration (only craftable recipes are shown per player)
 - Resourcepack-first design so custom art stays outside the jar
-- This basically includes functionality to see Custom Items in JEI / EMI / REI similar to [Easy Item List](https://modrinth.com/mod/easy-item-list)
+- This basically includes functionality to see Custom Items in JEI / EMI similar to [Easy Item List](https://modrinth.com/mod/easy-item-list)
 
 ## Using the Badge Press
 

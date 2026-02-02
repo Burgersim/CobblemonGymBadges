@@ -3,7 +3,6 @@ package com.pinotthecorsky.cgb.client;
 import com.pinotthecorsky.cgb.client.resources.BadgeModelPack;
 import com.pinotthecorsky.cgb.compat.EmiCompat;
 import com.pinotthecorsky.cgb.compat.JeiCompat;
-import com.pinotthecorsky.cgb.compat.ReiCompat;
 import net.minecraft.client.Minecraft;
 import net.neoforged.neoforge.client.event.RecipesUpdatedEvent;
 import net.neoforged.neoforge.event.TagsUpdatedEvent;
@@ -13,7 +12,6 @@ public final class CgbClientEvents {
         Minecraft.getInstance().execute(() -> {
             JeiCompat.onRecipesUpdated();
             EmiCompat.onRecipesUpdated();
-            ReiCompat.onRecipesUpdated();
         });
     }
 
@@ -25,7 +23,6 @@ public final class CgbClientEvents {
         Minecraft.getInstance().execute(() -> {
             JeiCompat.onRecipesUpdated();
             EmiCompat.onRecipesUpdated();
-            ReiCompat.onRecipesUpdated();
         });
     }
 
