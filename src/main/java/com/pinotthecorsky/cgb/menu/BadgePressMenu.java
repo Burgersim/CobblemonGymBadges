@@ -21,15 +21,16 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.level.Level;
 import net.minecraft.server.level.ServerPlayer;
+import org.jetbrains.annotations.NotNull;
 
 public class BadgePressMenu extends AbstractContainerMenu implements ContainerListener {
-    public static final int SLOT_INPUT_A = 0;
-    public static final int SLOT_INPUT_B = 1;
+    public static final int SLOT_INPUT_CORE = 0;
+    public static final int SLOT_INPUT_BASE = 1;
     public static final int SLOT_OUTPUT = 2;
-    private static final int SLOT_INPUT_A_X = 56;
-    private static final int SLOT_INPUT_A_Y = 17;
-    private static final int SLOT_INPUT_B_X = 56;
-    private static final int SLOT_INPUT_B_Y = 53;
+    private static final int SLOT_INPUT_CORE_X = 56;
+    private static final int SLOT_INPUT_CORE_Y = 17;
+    private static final int SLOT_INPUT_BASE_X = 56;
+    private static final int SLOT_INPUT_BASE_Y = 53;
     private static final int SLOT_OUTPUT_X = 116;
     private static final int SLOT_OUTPUT_Y = 35;
 
@@ -58,8 +59,8 @@ public class BadgePressMenu extends AbstractContainerMenu implements ContainerLi
         blockEntity.startOpen(playerInventory.player);
         blockEntity.addListener(this);
 
-        this.addSlot(new Slot(this.container, SLOT_INPUT_A, SLOT_INPUT_A_X, SLOT_INPUT_A_Y));
-        this.addSlot(new Slot(this.container, SLOT_INPUT_B, SLOT_INPUT_B_X, SLOT_INPUT_B_Y));
+        this.addSlot(new Slot(this.container, SLOT_INPUT_CORE, SLOT_INPUT_CORE_X, SLOT_INPUT_CORE_Y));
+        this.addSlot(new Slot(this.container, SLOT_INPUT_BASE, SLOT_INPUT_BASE_X, SLOT_INPUT_BASE_Y));
         this.addSlot(new ResultSlot(this.container, SLOT_OUTPUT, SLOT_OUTPUT_X, SLOT_OUTPUT_Y));
 
         for (int row = 0; row < 3; row++) {
@@ -89,12 +90,12 @@ public class BadgePressMenu extends AbstractContainerMenu implements ContainerLi
     }
 
     @Override
-    public void containerChanged(Container container) {
+    public void containerChanged(@NotNull Container container) {
         this.slotsChanged(container);
     }
 
     @Override
-    public void slotsChanged(Container container) {
+    public void slotsChanged(@NotNull Container container) {
         super.slotsChanged(container);
         if (container == this.container && !this.level.isClientSide) {
             this.updateResult();
@@ -130,7 +131,7 @@ public class BadgePressMenu extends AbstractContainerMenu implements ContainerLi
     }
 
     private BadgePressRecipeInput createInput() {
-        return new BadgePressRecipeInput(this.container.getItem(SLOT_INPUT_A), this.container.getItem(SLOT_INPUT_B));
+        return new BadgePressRecipeInput(this.container.getItem(SLOT_INPUT_CORE), this.container.getItem(SLOT_INPUT_BASE));
     }
 
     private boolean hasPermission(RecipeHolder<BadgeMakingRecipe> recipe) {
@@ -145,12 +146,12 @@ public class BadgePressMenu extends AbstractContainerMenu implements ContainerLi
     }
 
     @Override
-    public boolean stillValid(Player player) {
+    public boolean stillValid(@NotNull Player player) {
         return stillValid(this.access, player, CobblemonGymBadges.BADGE_PRESS.get());
     }
 
     @Override
-    public void removed(Player player) {
+    public void removed(@NotNull Player player) {
         super.removed(player);
         this.container.stopOpen(player);
         if (this.container instanceof BadgePressBlockEntity badgePress) {
@@ -159,10 +160,10 @@ public class BadgePressMenu extends AbstractContainerMenu implements ContainerLi
     }
 
     @Override
-    public ItemStack quickMoveStack(Player player, int index) {
+    public @NotNull ItemStack quickMoveStack(@NotNull Player player, int index) {
         ItemStack itemstack = ItemStack.EMPTY;
         Slot slot = this.slots.get(index);
-        if (slot != null && slot.hasItem()) {
+        if (slot.hasItem()) {
             ItemStack slotStack = slot.getItem();
             itemstack = slotStack.copy();
             if (index == SLOT_OUTPUT) {
@@ -200,19 +201,19 @@ public class BadgePressMenu extends AbstractContainerMenu implements ContainerLi
         }
 
         @Override
-        public boolean mayPlace(ItemStack stack) {
+        public boolean mayPlace(@NotNull ItemStack stack) {
             return false;
         }
 
         @Override
-        public boolean mayPickup(Player player) {
+        public boolean mayPickup(@NotNull Player player) {
             return BadgePressMenu.this.currentRecipe != null
                 && BadgePressMenu.this.currentRecipe.value().matches(BadgePressMenu.this.createInput(), BadgePressMenu.this.level)
                 && BadgePressMenu.this.hasPermission(BadgePressMenu.this.currentRecipe);
         }
 
         @Override
-        public void onTake(Player player, ItemStack stack) {
+        public void onTake(@NotNull Player player, @NotNull ItemStack stack) {
             if (BadgePressMenu.this.currentRecipe == null) {
                 return;
             }
