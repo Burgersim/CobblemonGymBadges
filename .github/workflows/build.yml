@@ -1,12 +1,16 @@
 name: Build
 
-on: [push, pull_request]
-
-permissions:
-  contents: write
+on:
+  push:
+    branches:
+      - "**"
+    tags-ignore:
+      - "v*"
+  pull_request:
 
 jobs:
   build:
+    if: ${{ !(github.event_name == 'push' && startsWith(github.event.head_commit.message, 'chore(release):')) }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -31,21 +35,3 @@ jobs:
 
       - name: Build with Gradle
         run: ./gradlew build
-
-      - name: Configure git identity for tagging
-        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
-      - name: Tag release version if missing
-        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
-        run: |
-          VERSION="$(grep -E '^mod_version=' gradle.properties | cut -d= -f2)"
-          TAG="v${VERSION}"
-          if git rev-parse "$TAG" >/dev/null 2>&1; then
-            echo "Tag $TAG already exists."
-            exit 0
-          fi
-          git tag -a "$TAG" -m "Release $TAG"
-          git push origin "$TAG"

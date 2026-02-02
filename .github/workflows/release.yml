@@ -1,8 +1,9 @@
 name: Release
 
 on:
-  release:
-    types: [published]
+  push:
+    tags:
+      - "v*"
   workflow_dispatch:
 
 permissions:
@@ -12,6 +13,12 @@ jobs:
   build-and-release:
     runs-on: ubuntu-latest
     steps:
+      - name: Ensure tag ref for releases
+        run: |
+          if [[ "${GITHUB_REF_TYPE}" != "tag" ]]; then
+            echo "Release workflow must run on a tag (ref type: ${GITHUB_REF_TYPE})."
+            exit 1
+          fi
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
@@ -32,8 +39,19 @@ jobs:
       - name: Make Gradle wrapper executable
         run: chmod +x ./gradlew
 
-      - name: Set mod version from tag
-        run: echo "MOD_VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_ENV"
+      - name: Set release metadata
+        run: |
+          if [[ "${GITHUB_REF_TYPE}" == "tag" && "${GITHUB_REF_NAME}" == v* ]]; then
+            echo "MOD_VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_ENV"
+            echo "RELEASE_TAG=${GITHUB_REF_NAME}" >> "$GITHUB_ENV"
+            echo "RELEASE_NAME=${GITHUB_REF_NAME}" >> "$GITHUB_ENV"
+          else
+            MOD_VERSION=$(grep -E '^mod_version=' gradle.properties | cut -d= -f2)
+            echo "MOD_VERSION=${MOD_VERSION}" >> "$GITHUB_ENV"
+            echo "RELEASE_TAG=v${MOD_VERSION}" >> "$GITHUB_ENV"
+            echo "RELEASE_NAME=v${MOD_VERSION}" >> "$GITHUB_ENV"
+          fi
+          echo "CHANGELOG=$(git log -1 --pretty=%B | tr '\n' ' ')" >> "$GITHUB_ENV"
 
       - name: Set mod metadata
         run: |
@@ -58,9 +76,9 @@ jobs:
         with:
           token: ${{ secrets.MODRINTH_TOKEN }}
           project: fjZQsOcn
-          name: ${{ github.event.release.name || env.MOD_VERSION }}
+          name: ${{ env.RELEASE_NAME }}
           version: ${{ env.MOD_VERSION }}
-          changelog: ${{ github.event.release.body }}
+          changelog: ${{ env.CHANGELOG }}
           loaders: |-
             neoforge
           game-versions: |-
@@ -70,5 +88,8 @@ jobs:
       - name: Upload jars to release
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ env.RELEASE_TAG }}
+          name: ${{ env.RELEASE_NAME }}
+          generate_release_notes: true
           files: |
             ${{ env.JAR_PATH }}
