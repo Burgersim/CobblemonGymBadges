@@ -65,8 +65,7 @@ jobs:
             neoforge
           game-versions: |-
             ${{ env.MC_VERSION }}
-          files: |
-            ${{ env.JAR_PATH }}
+          files: ${{ env.JAR_PATH }}
 
       - name: Upload jars to release
         uses: softprops/action-gh-release@v2
