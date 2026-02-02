@@ -35,11 +35,23 @@ jobs:
       - name: Set mod version from tag
         run: echo "MOD_VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_ENV"
 
-      - name: Set Minecraft version
-        run: echo "MC_VERSION=$(grep -E '^minecraft_version=' gradle.properties | cut -d= -f2)" >> "$GITHUB_ENV"
+      - name: Set mod metadata
+        run: |
+          echo "MC_VERSION=$(grep -E '^minecraft_version=' gradle.properties | cut -d= -f2)" >> "$GITHUB_ENV"
+          echo "MOD_ID=$(grep -E '^mod_id=' gradle.properties | cut -d= -f2)" >> "$GITHUB_ENV"
 
       - name: Build with Gradle
         run: ./gradlew build -Pmod_version="${MOD_VERSION}"
+
+      - name: Resolve built jar path
+        run: |
+          JAR="build/libs/${MOD_ID}-${MOD_VERSION}.jar"
+          if [ ! -f "$JAR" ]; then
+            echo "Jar not found: $JAR"
+            ls -la build/libs
+            exit 1
+          fi
+          echo "JAR_PATH=$JAR" >> "$GITHUB_ENV"
 
       - name: Publish to Modrinth
         uses: cloudnode-pro/modrinth-publish@v2
@@ -54,10 +66,10 @@ jobs:
           game-versions: |-
             ${{ env.MC_VERSION }}
           files: |
-            build/libs/*-${{ env.MOD_VERSION }}.jar
+            ${{ env.JAR_PATH }}
 
       - name: Upload jars to release
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            build/libs/*-${{ env.MOD_VERSION }}.jar
+            ${{ env.JAR_PATH }}
