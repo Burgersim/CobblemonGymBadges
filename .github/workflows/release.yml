@@ -31,11 +31,14 @@ jobs:
       - name: Make Gradle wrapper executable
         run: chmod +x ./gradlew
 
+      - name: Set mod version from tag
+        run: echo "MOD_VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_ENV"
+
       - name: Build with Gradle
-        run: ./gradlew build
+        run: ./gradlew build -Pmod_version="${MOD_VERSION}"
 
       - name: Upload jars to release
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            build/libs/*.jar
+            build/libs/*-${{ env.MOD_VERSION }}.jar
