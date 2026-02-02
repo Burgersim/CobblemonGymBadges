@@ -1,0 +1,105 @@
+name: Version Bump
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Configure git identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Bump mod version from commit messages
+        run: |
+          set -euo pipefail
+
+          last_subject=$(git log -1 --pretty=%s)
+          if [[ "$last_subject" =~ ^chore\\(release\\): ]]; then
+            echo "Release bump commit detected; skipping."
+            exit 0
+          fi
+
+          mc_version=$(grep -E '^minecraft_version=' gradle.properties | cut -d= -f2)
+          mod_version=$(grep -E '^mod_version=' gradle.properties | cut -d= -f2)
+
+          last_tag=$(git tag --list "v${mc_version}-*" --sort=-v:refname | head -n1 || true)
+          if [[ -n "$last_tag" ]]; then
+            range="${last_tag}..HEAD"
+          else
+            range="HEAD"
+          fi
+
+          bump=""
+          while IFS= read -r subject; do
+            if [[ "$subject" =~ ^(feat!|feat\\(.+\\)!|major)(:|\\s) ]]; then
+              bump="major"
+              break
+            fi
+            if [[ "$subject" =~ ^(feat|minor)(\\(.+\\))?: ]]; then
+              if [[ "$bump" != "major" ]]; then
+                bump="minor"
+              fi
+              continue
+            fi
+            if [[ "$subject" =~ ^(fix|patch)(\\(.+\\))?: ]]; then
+              if [[ -z "$bump" ]]; then
+                bump="patch"
+              fi
+            fi
+          done < <(git log --pretty=%s $range)
+
+          if [[ -z "$bump" ]]; then
+            echo "No version bump keywords found; skipping."
+            exit 0
+          fi
+
+          mod_part="${mod_version##*-}"
+          IFS='.' read -r major minor patch <<< "$mod_part"
+          major=${major:-0}
+          minor=${minor:-0}
+          patch=${patch:-0}
+
+          case "$bump" in
+            major)
+              major=$((major + 1))
+              minor=0
+              patch=0
+              ;;
+            minor)
+              minor=$((minor + 1))
+              patch=0
+              ;;
+            patch)
+              patch=$((patch + 1))
+              ;;
+          esac
+
+          new_mod_part="${major}.${minor}.${patch}"
+          new_mod_version="${mc_version}-${new_mod_part}"
+
+          if [[ "$new_mod_version" == "$mod_version" ]]; then
+            echo "Version already $new_mod_version; skipping."
+            exit 0
+          fi
+
+          echo "Bumping to $new_mod_version"
+          sed -i "s/^mod_version=.*/mod_version=${new_mod_version}/" gradle.properties
+
+          git add gradle.properties
+          git commit -m "chore(release): ${new_mod_version}"
+          git tag -a "v${new_mod_version}" -m "Release v${new_mod_version}"
+          git push origin HEAD
+          git push origin "v${new_mod_version}"
