@@ -17,12 +17,8 @@
   "commands.cgb.role_not_present": "%s does not have role %s",
   "commands.cgb.role_list_empty": "No roles defined.",
   "commands.cgb.role_list_entry": "%s: %s",
-
   "cgb.configuration.title": "Cobblemon Gym Badges Configs",
   "cgb.configuration.section.cgb.common.toml": "Cobblemon Gym Badges Configs",
   "cgb.configuration.section.cgb.common.toml.title": "Cobblemon Gym Badges Configs",
-  "cgb.configuration.items": "Item List",
-  "cgb.configuration.logDirtBlock": "Log Dirt Block",
-  "cgb.configuration.magicNumberIntroduction": "Magic Number Text",
-  "cgb.configuration.magicNumber": "Magic Number"
+  "cgb.configuration.items": "Item List"
 }
