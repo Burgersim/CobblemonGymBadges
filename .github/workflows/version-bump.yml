@@ -49,12 +49,24 @@ jobs:
             ) || true
           fi
 
+          if [[ -n "$last_tag" ]] && [[ "$last_tag" != "v${mc_version}-"* ]]; then
+            echo "Latest release tag $last_tag does not match minecraft_version $mc_version; ignoring."
+            last_tag=""
+          fi
+
           if [[ -n "$last_tag" ]] && ! git rev-parse "$last_tag" >/dev/null 2>&1; then
             git fetch --tags origin "refs/tags/${last_tag}:refs/tags/${last_tag}" || true
           fi
 
           if [[ -z "$last_tag" ]]; then
             last_tag=$(git tag --list "v${mc_version}-*" --sort=-v:refname | head -n1 || true)
+          fi
+
+          if [[ -n "$last_tag" ]]; then
+            tag_version="${last_tag#v}"
+            if [[ "$tag_version" == "${mc_version}-"* ]]; then
+              mod_version="$tag_version"
+            fi
           fi
           if [[ -n "$last_tag" ]]; then
             range="${last_tag}..HEAD"
