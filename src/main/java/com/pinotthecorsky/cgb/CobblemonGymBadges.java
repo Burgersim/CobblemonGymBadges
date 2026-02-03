@@ -99,6 +99,8 @@ public class CobblemonGymBadges {
                 .build()
         );
 
+    // NeoForge expects null here when no DataFixer is provided.
+    @SuppressWarnings("DataFlowIssue")
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<BadgePressBlockEntity>> BADGE_PRESS_BLOCK_ENTITY =
         BLOCK_ENTITIES.register("badge_press", () -> BlockEntityType.Builder.of(BadgePressBlockEntity::new, BADGE_PRESS.get()).build(null));
 
@@ -111,7 +113,8 @@ public class CobblemonGymBadges {
     public static final DeferredHolder<RecipeSerializer<?>, RecipeSerializer<BadgeMakingRecipe>> BADGEMAKING_RECIPE_SERIALIZER =
         RECIPE_SERIALIZERS.register("badgemaking", BadgeMakingRecipe.Serializer::new);
 
-    // Creates a creative tab with the id "cgb:example_tab" for the example item, that is placed after the combat tab
+    // Registered via side effects; kept as a static field for lifecycle registration.
+    @SuppressWarnings("unused")
     public static final DeferredHolder<CreativeModeTab, CreativeModeTab> COBBLEMON_GYM_BADGES = CREATIVE_MODE_TABS.register("cobblemon_gym_badges", () -> CreativeModeTab.builder()
             .title(Component.translatable("itemGroup.cgb")) //The language key for the title of your CreativeModeTab
             .withTabsBefore(CreativeModeTabs.COMBAT)
