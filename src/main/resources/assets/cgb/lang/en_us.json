@@ -1,11 +1,9 @@
 {
-  "itemGroup.cgb": "Example Mod Tab",
-  "block.cgb.example_block": "Example Block",
+  "itemGroup.cgb": "Cobblemon Gym Badges",
   "block.cgb.badge_press": "Badge Press",
   "item.cgb.badge": "Badge",
   "item.cgb.badge_ribbon": "Ribbon",
   "item.cgb.badge_untagged": "Badge",
-  "item.cgb.example_item": "Example Item",
   "container.cgb.badge_press": "Badge Press",
   "emi.category.cgb.badge_press": "Badge Press",
   "tooltip.cgb.badge_theme": "Theme: %s",

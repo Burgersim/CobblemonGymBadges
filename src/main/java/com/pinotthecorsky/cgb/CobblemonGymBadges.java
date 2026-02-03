@@ -84,7 +84,6 @@ public class CobblemonGymBadges {
                         .sound(SoundType.METAL)
     ));
 
-    // Creates a new BlockItem with the id "cgb:example_block", combining the namespace and path
     public static final DeferredItem<BlockItem> BADGE_PRESS_ITEM = ITEMS.registerSimpleBlockItem("badge_press", BADGE_PRESS);
 
     public static final DeferredItem<Item> BADGE_ITEM = ITEMS.register("badge", () -> new BadgeItem(new Item.Properties().stacksTo(1)));
@@ -111,10 +110,6 @@ public class CobblemonGymBadges {
 
     public static final DeferredHolder<RecipeSerializer<?>, RecipeSerializer<BadgeMakingRecipe>> BADGEMAKING_RECIPE_SERIALIZER =
         RECIPE_SERIALIZERS.register("badgemaking", BadgeMakingRecipe.Serializer::new);
-
-//    // Creates a new food item with the id "cgb:example_id", nutrition 1 and saturation 2
-//    public static final DeferredItem<Item> EXAMPLE_ITEM = ITEMS.registerSimpleItem("example_item", new Item.Properties().food(new FoodProperties.Builder()
-//            .alwaysEdible().nutrition(1).saturationModifier(2f).build()));
 
     // Creates a creative tab with the id "cgb:example_tab" for the example item, that is placed after the combat tab
     public static final DeferredHolder<CreativeModeTab, CreativeModeTab> COBBLEMON_GYM_BADGES = CREATIVE_MODE_TABS.register("cobblemon_gym_badges", () -> CreativeModeTab.builder()

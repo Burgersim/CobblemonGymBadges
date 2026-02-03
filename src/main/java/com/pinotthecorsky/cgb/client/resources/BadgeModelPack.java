@@ -30,6 +30,7 @@ import net.minecraft.server.packs.repository.Pack;
 import net.minecraft.server.packs.repository.PackSource;
 import net.minecraft.server.packs.resources.IoSupplier;
 import net.neoforged.neoforge.event.AddPackFindersEvent;
+import org.jetbrains.annotations.NotNull;
 
 public final class BadgeModelPack {
     private static final String PACK_ID = "cgb_generated_badge_models";
@@ -40,11 +41,11 @@ public final class BadgeModelPack {
     );
     private static final ResourceLocation BADGE_BASE_TEXTURE = ResourceLocation.fromNamespaceAndPath(
         CobblemonGymBadges.MODID,
-        "item/blank_badge"
+        "item/badge_base"
     );
     private static final ResourceLocation RIBBON_BASE_TEXTURE = ResourceLocation.fromNamespaceAndPath(
         CobblemonGymBadges.MODID,
-        "item/blue_ribbon"
+        "item/ribbon_base"
     );
     private static final AtomicReference<RegistryAccess> REGISTRY_ACCESS = new AtomicReference<>(RegistryAccess.EMPTY);
     private static final AtomicBoolean RELOAD_PENDING = new AtomicBoolean(false);
@@ -72,7 +73,7 @@ public final class BadgeModelPack {
 
     public static void requestReload() {
         Minecraft minecraft = Minecraft.getInstance();
-        if (minecraft == null || !RELOAD_PENDING.compareAndSet(false, true)) {
+        if (!RELOAD_PENDING.compareAndSet(false, true)) {
             return;
         }
         minecraft.execute(() -> minecraft.reloadResourcePacks().whenComplete((result, throwable) -> RELOAD_PENDING.set(false)));
@@ -86,12 +87,12 @@ public final class BadgeModelPack {
         PackLocationInfo info = new PackLocationInfo(PACK_ID, PACK_TITLE, PackSource.BUILT_IN, Optional.empty());
         Pack.ResourcesSupplier supplier = new Pack.ResourcesSupplier() {
             @Override
-            public net.minecraft.server.packs.PackResources openPrimary(PackLocationInfo id) {
+            public net.minecraft.server.packs.@NotNull PackResources openPrimary(@NotNull PackLocationInfo id) {
                 return new GeneratedResources(id, PACK_META);
             }
 
             @Override
-            public net.minecraft.server.packs.PackResources openFull(PackLocationInfo id, Pack.Metadata metadata) {
+            public net.minecraft.server.packs.@NotNull PackResources openFull(@NotNull PackLocationInfo id, Pack.@NotNull Metadata metadata) {
                 return openPrimary(id);
             }
         };
@@ -120,7 +121,7 @@ public final class BadgeModelPack {
         }
 
         @Override
-        public void listResources(PackType type, String resourceNamespace, String path, ResourceOutput resourceOutput) {
+        public void listResources(@NotNull PackType type, @NotNull String resourceNamespace, @NotNull String path, @NotNull ResourceOutput resourceOutput) {
             if (type != PackType.CLIENT_RESOURCES || !CobblemonGymBadges.MODID.equals(resourceNamespace)) {
                 return;
             }
@@ -134,7 +135,7 @@ public final class BadgeModelPack {
         }
 
         @Override
-        public Set<String> getNamespaces(PackType type) {
+        public @NotNull Set<String> getNamespaces(@NotNull PackType type) {
             if (type == PackType.CLIENT_RESOURCES) {
                 return Set.of(CobblemonGymBadges.MODID);
             }
@@ -143,13 +144,13 @@ public final class BadgeModelPack {
 
         @Nullable
         @Override
-        public IoSupplier<InputStream> getRootResource(String... paths) {
+        public IoSupplier<InputStream> getRootResource(String @NotNull ... paths) {
             return null;
         }
 
         @Nullable
         @Override
-        public IoSupplier<InputStream> getResource(PackType type, ResourceLocation location) {
+        public IoSupplier<InputStream> getResource(@NotNull PackType type, @NotNull ResourceLocation location) {
             if (type != PackType.CLIENT_RESOURCES) {
                 return null;
             }
@@ -246,16 +247,15 @@ public final class BadgeModelPack {
         }
 
         private static byte[] buildGeneratedModelJson(ResourceLocation textureId) {
-            StringBuilder builder = new StringBuilder();
-            builder.append("{\n");
-            builder.append("  \"parent\": \"minecraft:item/generated\",\n");
-            builder.append("  \"textures\": {\n");
-            builder.append("    \"layer0\": \"");
-            builder.append(textureId);
-            builder.append("\"\n");
-            builder.append("  }\n");
-            builder.append("}\n");
-            return builder.toString().getBytes(StandardCharsets.UTF_8);
+            String builder = "{\n" +
+                    "  \"parent\": \"minecraft:item/generated\",\n" +
+                    "  \"textures\": {\n" +
+                    "    \"layer0\": \"" +
+                    textureId +
+                    "\"\n" +
+                    "  }\n" +
+                    "}\n";
+            return builder.getBytes(StandardCharsets.UTF_8);
         }
     }
 

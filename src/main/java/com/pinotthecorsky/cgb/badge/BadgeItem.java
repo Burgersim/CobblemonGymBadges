@@ -1,7 +1,6 @@
 package com.pinotthecorsky.cgb.badge;
 
 import com.pinotthecorsky.cgb.CobblemonGymBadges;
-import java.util.List;
 import javax.annotation.Nullable;
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderLookup;
@@ -12,35 +11,12 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.component.CustomModelData;
+import org.jetbrains.annotations.NotNull;
 
 public class BadgeItem extends Item {
     public BadgeItem(Properties properties) {
         super(properties);
-    }
-
-    @Nullable
-    public static BadgeDefinition getDefinition(ItemStack stack, @Nullable HolderLookup.Provider registries) {
-        ResourceLocation badgeId = stack.get(CobblemonGymBadges.BADGE_THEME.get());
-        if (badgeId == null || registries == null) {
-            return null;
-        }
-        return lookupDefinition(registries, badgeId);
-    }
-
-    public static String getRequiredTheme(ItemStack stack, @Nullable HolderLookup.Provider registries) {
-        ResourceLocation badgeId = stack.get(CobblemonGymBadges.BADGE_THEME.get());
-        if (badgeId == null) {
-            return "";
-        }
-        if (registries != null) {
-            BadgeDefinition definition = lookupDefinition(registries, badgeId);
-            if (definition != null) {
-                return definition.effectiveTheme(badgeId);
-            }
-        }
-        return badgeId.getPath();
     }
 
     public static String getRequiredRole(ItemStack stack, @Nullable HolderLookup.Provider registries) {
@@ -130,28 +106,12 @@ public class BadgeItem extends Item {
     }
 
     @Override
-    public Component getName(ItemStack stack) {
+    public @NotNull Component getName(ItemStack stack) {
         ResourceLocation badgeId = stack.get(CobblemonGymBadges.BADGE_THEME.get());
         if (badgeId != null) {
             return Component.translatable("badge.%s.%s".formatted(badgeId.getNamespace(), badgeId.getPath()));
         }
         return super.getName(stack);
-    }
-
-    @Override
-    public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltipComponents, TooltipFlag tooltipFlag) {
-        BadgeDefinition definition = getDefinition(stack, context.registries());
-        if (definition == null) {
-            return;
-        }
-        String theme = definition.theme();
-        if (!theme.isEmpty()) {
-            tooltipComponents.add(Component.translatable("tooltip.cgb.badge_theme", theme));
-        }
-        String role = definition.effectiveRole();
-        if (!role.isEmpty()) {
-            tooltipComponents.add(Component.translatable("tooltip.cgb.badge_role", "gym_leader_" + role));
-        }
     }
 
     @Nullable

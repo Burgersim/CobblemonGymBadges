@@ -1,6 +1,6 @@
 {
   "parent": "minecraft:item/generated",
   "textures": {
-    "layer0": "cgb:item/blank_badge"
+    "layer0": "cgb:item/badge_base"
   }
 }
